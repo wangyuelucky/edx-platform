@@ -27,6 +27,7 @@ values are (x,y) coordinates of centers of dragged images.
 import json
 import re
 from itertools import groupby
+from collections import Counter
 
 
 def flat_user_answer(user_answer):
@@ -196,7 +197,7 @@ class DragAndDrop(object):
         for index, draggable_ids in enumerate(self.correct_groups):
             # 'number' rule special case
             # for reusable draggables we may get in self.user_groups
-            # {'1': [u'2', u'2', u'2'], '0': [u'1', u'1'], '2': [u'3']}
+            # {'1': ['2', '2', '2'], '0': ['1', '1'], '2': ['3']}
             # if '+number' is in rule - do not remove duplicates and strip
             # '+number' from rule
             current_rule = self.correct_positions[index].keys()[0]
@@ -475,10 +476,45 @@ def get_all_dragabbles(raw_user_input, xml):
 
     class Draggable(object):
         """Class which describe draggables objects."""
-        def __init__(self, x, y, target):
+        def __init__(self, name, x, y, target, children):
+            """Initialize `Draggable`:
+            name - X-coordinate
+            x - X-coordinate
+            y - Y-coordinate
+            target - target in which lays current draggable
+            children - list of first level children
+            """
+            self.name = name
             self.x = x
             self.y = y
             self.target = target
+            self.children = children
+
+        def contains(self, *args, **kwargs):
+            """Check if current `Draggable` object contains some draggables.
+
+            Example:
+            ...contains('obj1', 'obj2', 'obj1')
+            return `True` if `self.children` equal to
+            ['obj1', 'obj1', 'obj2']
+            or
+            ['obj1', 'obj2', 'obj1']
+            or
+            ['obj2', 'obj1', 'obj1'].
+
+            So, the order doesn't matter.
+
+            `exact` - default value = `True`.
+            If you set option `exact` to `False`, then you have not
+            strict conditional and check only, that `args` in `self.children`.
+            """
+
+            exact = kwargs.get('exact', True)
+
+            if exact:
+                return sorted(self.children) == sorted(args)
+            else:
+                return not bool(Counter(args) - Counter(self.children))
 
     class BadProperty(object):
         """Property for non-existent object.
@@ -520,7 +556,13 @@ def get_all_dragabbles(raw_user_input, xml):
                 return self.items[key]
             except IndexError:
                 bad_property = BadProperty()
-                return Draggable(bad_property, bad_property, bad_property)
+                return Draggable(
+                    bad_property,
+                    bad_property,
+                    bad_property,
+                    bad_property,
+                    bad_property
+                )
 
         @property
         def count(self):
@@ -544,17 +586,85 @@ def get_all_dragabbles(raw_user_input, xml):
         def __getitem__(self, key):
             return self.items.get(key) or DraggableSet([])
 
-    user_input = json.loads(raw_user_input)
-    sorted_user_input = sorted(user_input, key=lambda obj: obj.keys()[0])
+    def prepare_targets(user_input):
+        """Convert `user_input` from client to helpful structure:
 
+        [(draggable_id, [target1, target2, ...]), ...],
+
+        where target - first level `<target>` or nearest `<draggable>`.
+
+        Example:
+        user_input = [
+            {'house': 'base_target{5}{10}'},
+            {'baby': {'1': {'house': 'base_target'}}},
+            {'baby': {'2': {'house': 'base_target'}}}
+        ]
+
+        `prepare_targets` return
+        [
+            ('baby', ['base_target[house]', 'base_target[house]']),
+            ('house', ['base_target{5}{10}'])
+        ]
+        """
+        result = []
+
+        for item in user_input:
+            if isinstance(item.values()[0], dict):
+                result.append({item.keys()[0]: item.values()[0].values()[0]})
+            else:
+                result.append(item)
+
+        result = flat_user_answer(result)
+        sorted_result = sorted(result, key=lambda obj: obj.keys()[0])
+        groups = groupby(sorted_result, key=lambda obj: obj.keys()[0])
+
+        return [(i[0], [j.values()[0] for j in i[1]]) for i in groups]
+
+    def prepare_children(user_input):
+        """Convert `user_input` from client to helpful structure:
+
+        {target: [draggable1_id, draggable2_id, ...]},
+
+        where target - first level `<target>` or nearest `<draggable>`.
+
+        Example:
+        user_input = [
+            {'house': 'base_target{5}{10}'},
+            {'baby': {'1': {'house': 'base_target'}}},
+            {'baby': {'2': {'house': 'base_target'}}}
+        ]
+
+        `prepare_children` return
+        {
+            'base_target': ['house'],
+            'base_target[house]': ['baby', 'baby']
+        }
+        """
+        result = []
+
+        for item in user_input:
+            if isinstance(item.values()[0], dict):
+                result.append({item.keys()[0]: item.values()[0].values()[0]})
+            else:
+                result.append(item)
+
+        result = clean_user_answer(flat_user_answer(result))
+        sorted_result = sorted(result, key=lambda obj: obj.values()[0])
+        groups = groupby(sorted_result, key=lambda obj: obj.values()[0])
+
+        return dict([(i[0], [j.keys()[0] for j in i[1]]) for i in groups])
+
+    user_input = json.loads(raw_user_input)
+
+    # Container for all `Draggable` instances.
     all_dragabbles = AllDragabbles
 
-    for key, value in groupby(sorted_user_input, key=lambda obj: obj.keys()[0]):
+    all_children = prepare_children(user_input)
+    all_targets = prepare_targets(user_input)
+
+    for draggable, targets in all_targets:
         dragabbles = []
 
-        # We ignore dragabbles on draggables. Support only first level
-        # target.
-        targets = [i[key] for i in value if isinstance(i[key], basestring)]
         for target in targets:
             cell_positions = re.findall(r'\{([0-9]*)\}', target)
             if cell_positions:
@@ -566,32 +676,44 @@ def get_all_dragabbles(raw_user_input, xml):
                 item_col = 0
                 item_row = 0
 
-            # We ignore dragabbles on draggables. Support only first
-            # level target.
+            # For dragabbles on draggables we support minor features.
+            # For that objects we don't support x,y properties.
+            # TODO: add support x,y properties for nested draggables.
             target_object = xml.find(
                 'drag_and_drop_input'
             ).find("target[@id='{0}']".format(clean_target))
 
-            # Get data from xml.
-            target_x = int(target_object.attrib.get('x'))
-            target_y = int(target_object.attrib.get('y'))
-            target_width = int(target_object.attrib.get('w'))
-            target_height = int(target_object.attrib.get('h'))
-            target_col = int(target_object.attrib.get('col', 1))
-            target_row = int(target_object.attrib.get('row', 1))
+            if target_object is not None:
+                # Get data from xml.
+                target_x = int(target_object.attrib.get('x'))
+                target_y = int(target_object.attrib.get('y'))
+                target_width = int(target_object.attrib.get('w'))
+                target_height = int(target_object.attrib.get('h'))
+                target_col = int(target_object.attrib.get('col', 1))
+                target_row = int(target_object.attrib.get('row', 1))
 
-            cell_width = target_width / target_col
-            cell_height = target_height / target_row
+                cell_width = target_width / target_col
+                cell_height = target_height / target_row
 
-            # Calculate x,y coordinates of item.
-            x = int(target_x + (item_col + 0.5) * cell_width)
-            y = int(target_y + (item_row + 0.5) * cell_height)
+                # Calculate x,y coordinates of item.
+                x = int(target_x + (item_col + 0.5) * cell_width)
+                y = int(target_y + (item_row + 0.5) * cell_height)
+            else:
+                x = BadProperty()
+                y = BadProperty()
 
-            dragabbles.append(Draggable(x, y, clean_target))
+            # Try to find children.
+            children = all_children.get('{0}[{1}]'.format(
+                clean_target, draggable),
+                []
+            )
+            dragabbles.append(
+                Draggable(draggable, x, y, clean_target, children)
+            )
 
             # Sort by Y-coordinate.
             dragabbles.sort(key=lambda obj: obj.y)
 
-        all_dragabbles[key] = DraggableSet(dragabbles)
+        all_dragabbles[draggable] = DraggableSet(dragabbles)
 
     return all_dragabbles

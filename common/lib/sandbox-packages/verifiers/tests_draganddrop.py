@@ -986,6 +986,304 @@ class Test_DragAndDrop_Grade(unittest.TestCase):
         dragabbles = draganddrop.get_all_dragabbles(user_input, xml)
         self.assertFalse(all(eval(constraints_raw)))
 
+    def test_constraints_nested_draggables(self):
+        raw_xml = '''
+        <customresponse>
+            <text>
+                <h4>Babies and Sun</h4><br/>
+                <h4>Drag exactly two babies or two sun on the house.</h4>
+                <br/>
+            </text>
+
+            <drag_and_drop_input img="/static/images/grid_test/610x610_blank.png" target_outline="true" >
+                <draggable id="house" icon="/static/images/grid_test/house.png" can_reuse="true">
+                    <target id="1" x="0" y="0" w="32" h="32"/>
+                    <target id="2" x="34" y="0" w="32" h="32"/>
+                    <target id="3" x="68" y="0" w="32" h="32"/>
+                </draggable>
+
+                <draggable id="baby" icon="/static/images/grid_test/baby.png" can_reuse="true" />
+                <draggable id="sun" icon="/static/images/grid_test/sun.png" can_reuse="true" />
+
+                <target id="base_target" type="grid" x="5" y="5" w="600" h="600" col="30" row="30"/>
+            </drag_and_drop_input>
+
+            <answer type="loncapa/python"><![CDATA[
+        dragabbles = draganddrop.get_all_dragabbles(submission[0], xml)
+
+        constraints = [
+            dragabbles['house'].count == 1,
+            dragabbles['sun'].count == 2 or dragabbles['baby'].count == 2
+        ]
+
+        if all(constraints):
+            correct = ['correct']
+        else:
+            correct = ['incorrect']
+        ]]>
+            </answer>
+        </customresponse>
+        '''
+
+        xml = etree.fromstring(raw_xml)
+
+        correct_answer = [
+            {
+                'draggables': ['house'],
+                'targets': ['base_target'],
+                'rule': 'exact'
+            },
+            {
+                'draggables': ['sun', 'baby'],
+                'targets': [
+                    'base_target[house][1]', 'base_target[house][2]', 'base_target[house][3]'
+                ],
+                'rule': 'anyof'
+            }
+        ]
+
+        constraints_raw = '''[
+            dragabbles['house'].count == 1,
+            dragabbles['sun'].count == 2 or dragabbles['baby'].count == 2
+        ]'''
+
+        # Correct
+        user_input = json.dumps([
+            {'house': 'base_target{5}{10}'},
+            {'baby': {'1': {'house': 'base_target'}}},
+            {'baby': {'2': {'house': 'base_target'}}},
+            {'sun': {'3': {'house': 'base_target'}}}
+        ])
+        dragabbles = draganddrop.get_all_dragabbles(user_input, xml)
+
+        self.assertTrue(all(eval(constraints_raw)))
+        self.assertTrue(draganddrop.grade(user_input, correct_answer))
+
+    def test_constraints_contains(self):
+        raw_xml = '''
+        <customresponse>
+            <text>
+                <h4>Babies and Sun</h4><br/>
+                <h4>Drag exactly two babies or two sun on the house.</h4>
+                <br/>
+            </text>
+
+            <drag_and_drop_input img="/static/images/grid_test/610x610_blank.png" target_outline="true" >
+                <draggable id="house" icon="/static/images/grid_test/house.png" can_reuse="true">
+                    <target id="1" x="0" y="0" w="32" h="32"/>
+                    <target id="2" x="34" y="0" w="32" h="32"/>
+                    <target id="3" x="68" y="0" w="32" h="32"/>
+                </draggable>
+
+                <draggable id="baby" icon="/static/images/grid_test/baby.png" can_reuse="true" />
+                <draggable id="sun" icon="/static/images/grid_test/sun.png" can_reuse="true" />
+
+                <target id="base_target" type="grid" x="5" y="5" w="600" h="600" col="30" row="30"/>
+            </drag_and_drop_input>
+
+            <answer type="loncapa/python"><![CDATA[
+        dragabbles = draganddrop.get_all_dragabbles(submission[0], xml)
+
+        constraints = [
+            dragabbles['house'].count == 1,
+            dragabbles['sun'].count == 2 or dragabbles['baby'].count == 2,
+            dragabbles['house'].on('base_target')[0].contains('sun', 'sun') or
+            dragabbles['house'].on('base_target')[0].contains('baby', 'baby')
+        ]
+
+        if all(constraints):
+            correct = ['correct']
+        else:
+            correct = ['incorrect']
+        ]]>
+            </answer>
+        </customresponse>
+        '''
+
+        xml = etree.fromstring(raw_xml)
+
+        constraints_raw = '''[
+            dragabbles['house'].count == 1,
+            dragabbles['sun'].count == 2 or dragabbles['baby'].count == 2,
+            dragabbles['house'].on('base_target')[0].contains('sun', 'sun') or
+            dragabbles['house'].on('base_target')[0].contains('baby', 'baby')
+        ]'''
+
+        # Correct
+        user_input = json.dumps([
+            {'house': 'base_target{5}{10}'},
+            {'baby': {'1': {'house': 'base_target'}}},
+            {'baby': {'2': {'house': 'base_target'}}}
+        ])
+        dragabbles = draganddrop.get_all_dragabbles(user_input, xml)
+
+        self.assertTrue(all(eval(constraints_raw)))
+
+        # Correct
+        user_input = json.dumps([
+            {'house': 'base_target{5}{10}'},
+            {'baby': {'1': {'house': 'base_target'}}},
+            {'baby': {'3': {'house': 'base_target'}}}
+        ])
+        dragabbles = draganddrop.get_all_dragabbles(user_input, xml)
+
+        self.assertTrue(all(eval(constraints_raw)))
+
+        # Correct
+        user_input = json.dumps([
+            {'house': 'base_target{5}{10}'},
+            {'baby': {'3': {'house': 'base_target'}}},
+            {'baby': {'1': {'house': 'base_target'}}}
+        ])
+        dragabbles = draganddrop.get_all_dragabbles(user_input, xml)
+
+        # Correct
+        user_input = json.dumps([
+            {'house': 'base_target{5}{10}'},
+            {'sun': {'3': {'house': 'base_target'}}},
+            {'sun': {'1': {'house': 'base_target'}}}
+        ])
+        dragabbles = draganddrop.get_all_dragabbles(user_input, xml)
+
+        self.assertTrue(all(eval(constraints_raw)))
+
+        # Fail
+        user_input = json.dumps([
+            {'house': 'base_target{5}{10}'},
+            {'sun': {'1': {'house': 'base_target'}}},
+            {'sun': {'2': {'house': 'base_target'}}},
+            {'sun': {'3': {'house': 'base_target'}}}
+        ])
+        dragabbles = draganddrop.get_all_dragabbles(user_input, xml)
+
+        self.assertFalse(all(eval(constraints_raw)))
+
+        # Fail
+        user_input = json.dumps([
+            {'house': 'base_target{5}{10}'},
+            {'baby': {'1': {'house': 'base_target'}}},
+            {'baby': {'2': {'house': 'base_target'}}},
+            {'sun': {'3': {'house': 'base_target'}}}
+        ])
+        dragabbles = draganddrop.get_all_dragabbles(user_input, xml)
+
+        self.assertFalse(all(eval(constraints_raw)))
+
+        # Fail
+        user_input = json.dumps([
+            {'house': 'base_target{5}{10}'},
+            {'baby': {'1': {'house': 'base_target'}}},
+            {'sun': {'2': {'house': 'base_target'}}}
+        ])
+        dragabbles = draganddrop.get_all_dragabbles(user_input, xml)
+
+        self.assertFalse(all(eval(constraints_raw)))
+
+    def test_constraints_contains_exact(self):
+        raw_xml = '''
+        <customresponse>
+            <text>
+                <h4>Babies and Sun</h4><br/>
+                <h4>Drag exactly two babies or two sun on the house.</h4>
+                <br/>
+            </text>
+
+            <drag_and_drop_input img="/static/images/grid_test/610x610_blank.png" target_outline="true" >
+                <draggable id="house" icon="/static/images/grid_test/house.png" can_reuse="true">
+                    <target id="1" x="0" y="0" w="32" h="32"/>
+                    <target id="2" x="34" y="0" w="32" h="32"/>
+                    <target id="3" x="68" y="0" w="32" h="32"/>
+                </draggable>
+
+                <draggable id="baby" icon="/static/images/grid_test/baby.png" can_reuse="true" />
+                <draggable id="sun" icon="/static/images/grid_test/sun.png" can_reuse="true" />
+
+                <target id="base_target" type="grid" x="5" y="5" w="600" h="600" col="30" row="30"/>
+            </drag_and_drop_input>
+
+            <answer type="loncapa/python"><![CDATA[
+        dragabbles = draganddrop.get_all_dragabbles(submission[0], xml)
+
+        constraints = [
+            dragabbles['house'].count == 1,
+            dragabbles['house'].on('base_target')[0].contains('sun', 'sun', exact=False) or
+            dragabbles['house'].on('base_target')[0].contains('baby', 'baby')
+        ]
+
+        if all(constraints):
+            correct = ['correct']
+        else:
+            correct = ['incorrect']
+        ]]>
+            </answer>
+        </customresponse>
+        '''
+
+        xml = etree.fromstring(raw_xml)
+        constraints_raw = '''[
+            dragabbles['house'].count == 1,
+            dragabbles['house'].on('base_target')[0].contains('sun', 'sun', exact=False) or
+            dragabbles['house'].on('base_target')[0].contains('baby', 'baby')
+        ]'''
+
+        # Correct
+        user_input = json.dumps([
+            {'house': 'base_target{5}{10}'},
+            {'sun': {'1': {'house': 'base_target'}}},
+            {'sun': {'2': {'house': 'base_target'}}},
+            {'baby': {'3': {'house': 'base_target'}}}
+        ])
+        dragabbles = draganddrop.get_all_dragabbles(user_input, xml)
+
+        self.assertTrue(all(eval(constraints_raw)))
+
+        # Correct
+        user_input = json.dumps([
+            {'house': 'base_target{5}{10}'},
+            {'sun': {'1': {'house': 'base_target'}}},
+            {'sun': {'2': {'house': 'base_target'}}},
+            {'sun': {'3': {'house': 'base_target'}}}
+        ])
+        dragabbles = draganddrop.get_all_dragabbles(user_input, xml)
+
+        self.assertTrue(all(eval(constraints_raw)))
+
+        # Correct
+        user_input = json.dumps([
+            {'house': 'base_target{5}{10}'},
+            {'baby': {'1': {'house': 'base_target'}}},
+            {'baby': {'2': {'house': 'base_target'}}},
+        ])
+        dragabbles = draganddrop.get_all_dragabbles(user_input, xml)
+
+        self.assertTrue(all(eval(constraints_raw)))
+
+        # Fail
+        user_input = json.dumps([
+            {'house': 'base_target{5}{10}'},
+            {'sun': {'1': {'house': 'base_target'}}}
+        ])
+        dragabbles = draganddrop.get_all_dragabbles(user_input, xml)
+
+        # Fail
+        user_input = json.dumps([
+            {'house': 'base_target{5}{10}'},
+            {'baby': {'1': {'house': 'base_target'}}}
+        ])
+        dragabbles = draganddrop.get_all_dragabbles(user_input, xml)
+
+        self.assertFalse(all(eval(constraints_raw)))
+
+        # Fail
+        user_input = json.dumps([
+            {'house': 'base_target{5}{10}'},
+            {'sun': {'1': {'house': 'base_target'}}},
+            {'baby': {'3': {'house': 'base_target'}}}
+        ])
+        dragabbles = draganddrop.get_all_dragabbles(user_input, xml)
+
+        self.assertFalse(all(eval(constraints_raw)))
+
 
 class Test_DragAndDrop_Populate(unittest.TestCase):
 
