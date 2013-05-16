@@ -304,11 +304,16 @@ function goto( mode)
     </p>
     <p>
       Then select an action:
-       <input type="submit" name="action" value="Reset ALL students' attempts">
-       <input type="submit" name="action" value="Regrade ALL students' problem submissions">
+      <input type="submit" name="action" value="Reset ALL students' attempts">
+      <input type="submit" name="action" value="Regrade ALL students' problem submissions">
     </p>
     <p>
-    <p>These actions run in the background, and status for active tasks will appear in a table below.</p>
+    <p>These actions run in the background, and status for active tasks will appear in a table below.
+       To see status for all tasks submitted for this course, click on this button:
+    </p>
+    <p>
+      <input type="submit" name="action" value="Show Background Task History">
+    </p>
 
     <hr width="40%" style="align:left">
 
@@ -341,6 +346,12 @@ function goto( mode)
       <input type="submit" name="action" value="Delete student state for module">  
     </p>
     %endif
+    <p>Regrading runs in the background, and status for active tasks will appear in a table below.
+       To see status for all tasks submitted for this course and student, click on this button:
+    </p>
+    <p>
+      <input type="submit" name="action" value="Show Background Task History for Student">
+    </p>
 
  %endif
 
