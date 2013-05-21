@@ -1,3 +1,8 @@
+// REFACTOR: Add documentation.
+// REFACTOR: Go through all files - use short hand if conditionals.
+// REFACTOR: CSS should be separated to CSS files as much as possible.
+// REFACTOR: Add class name for each created element.
+
 (function (requirejs, require, define) {
 define(
     ['logme', 'state', 'config_parser', 'container', 'base_image', 'scroller', 'draggables', 'targets', 'update_input'],
@@ -5,6 +10,8 @@ define(
     return Main;
 
     function Main() {
+
+        // REFACTOR: Move to separate file.
 
         // https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Array/every
         //
@@ -43,6 +50,8 @@ define(
     function processProblem(index, value) {
         var problemId, config, state;
 
+        // REFACTOR: $(value) should be cached.
+        // REFACTOR: Convert to boolean true. Python also. Use .data() instead of .attr()
         if ($(value).attr('data-problem-processed') === 'true') {
             // This problem was already processed by us before, so we will
             // skip it.
@@ -51,6 +60,7 @@ define(
         }
         $(value).attr('data-problem-processed', 'true');
 
+        // REFACTOR: Remove unnecessary type checking.
         problemId = $(value).attr('data-plain-id');
         if (typeof problemId !== 'string') {
             logme('ERROR: Could not find the ID of the problem DOM element.');
@@ -69,6 +79,7 @@ define(
 
         state = State(problemId);
 
+        // REFACTOR: Use short hand false.  (!)
         if (configParser(state, config) !== true) {
             logme('ERROR: Could not make sense of the JSON configuration options.');
 
@@ -79,6 +90,7 @@ define(
         BaseImage(state);
 
         (function addContent() {
+            // REFACTOR: Use event instead of setTimeout()
             if (state.baseImageLoaded !== true) {
                 setTimeout(addContent, 50);
 
