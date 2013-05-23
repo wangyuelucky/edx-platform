@@ -3,5 +3,6 @@
 -e common/lib/capa
 -e common/lib/chem
 -e common/lib/symmath
+-e common/lib/draganddrop
 -e common/lib/xmodule
 -e .
