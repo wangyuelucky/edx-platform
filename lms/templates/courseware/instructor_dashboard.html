@@ -295,6 +295,7 @@ function goto( mode)
     <hr width="40%" style="align:left">
 
   %endif
+  %if settings.MITX_FEATURES.get('ENABLE_COURSE_BACKGROUND_TASKS'):
     <H2>Course-specific grade adjustment</h2>
 
     <p>
@@ -319,6 +320,7 @@ function goto( mode)
     </p>
 
     <hr width="40%" style="align:left">
+  %endif
 
     <H2>Student-specific grade inspection and adjustment</h2>
     <p>
@@ -340,7 +342,9 @@ function goto( mode)
     <p>
       Then select an action:
       <input type="submit" name="action" value="Reset student's attempts">
+      %if settings.MITX_FEATURES.get('ENABLE_COURSE_BACKGROUND_TASKS'):
       <input type="submit" name="action" value="Regrade student's problem submission">
+      %endif
     </p>
 
     %if instructor_access:
@@ -349,12 +353,14 @@ function goto( mode)
       <input type="submit" name="action" value="Delete student state for module">  
     </p>
     %endif
+    %if settings.MITX_FEATURES.get('ENABLE_COURSE_BACKGROUND_TASKS'):
     <p>Regrading runs in the background, and status for active tasks will appear in a table below.
        To see status for all tasks submitted for this course and student, click on this button:
     </p>
     <p>
       <input type="submit" name="action" value="Show Background Task History for Student">
     </p>
+    %endif
 
  %endif
 
