@@ -1,9 +1,10 @@
-<form class="upload-dialog" action="<%= upload_url %>" method="POST">
+<form class="upload-dialog">
   <h3><%= title %></h3>
   <p><%= message %></p>
-  <a href="#" class="button action-select">Select a File</a>
+  <a href="#" class="button action-select">Select a File:</a>
+  <span class="local-file-name"><% if (uploadFile) { print(uploadFile.name)} %></span>
   <div class="actions">
-    <input type="submit" class="button action-upload" value="Upload" />
+    <input type="button" class="button action-upload" value="Upload" <% if (!uploadFile) { %>disabled="disabled"<% } %> />
     <input type="button" class="button action-cancel" value="Cancel" />
   </div>
   <% if(uploading) { %>Uploading! <%= uploadPercentage %>%<% } %>

@@ -122,13 +122,13 @@ CMS.Views.ChapterEdit = Backbone.View.extend({
 CMS.Views.UploadDialog = Backbone.View.extend({
     initialize: function() {
         this.template = _.template($("#upload-dialog-tpl").text());
-        //this.listenTo(this.model, "change", this.render);
+        this.listenTo(this.model, "change", this.render);
     },
     render: function() {
         this.$el.html(this.template({
             title: this.model.escape('title'),
             message: this.model.escape('message'),
-            upload_url: UPLOAD_ASSET_CALLBACK_URL,
+            uploadFile: this.model.get('uploadFile'),
             uploading: this.model.get('uploading') || false,
             uploadPercentage: this.model.get('uploadPercentage') || 0,
         }))
@@ -148,24 +148,36 @@ CMS.Views.UploadDialog = Backbone.View.extend({
                     'X-CSRFToken': $.cookie('csrftoken')
                 }
             },
-            button: this.$(".action-select").get(0),
+            button: this.$(".action-select"),
+            multiple: false,
+            autoUpload: false,
             validation: {
                 // allowedExtensions: ['pdf'],
                 sizeLimit: 999999999
             }
         });
         this.uploader
+            .on('submit', _.bind(this.onSubmit, this))
             .on('error', _.bind(this.onError, this))
             .on('progress', _.bind(this.onProgress, this))
             .on('complete', _.bind(this.onComplete, this));
+        this.$el.fineUploader('addFiles', this.model.get('uploadFile'))
         return this.uploader;
     },
     events: {
-        "click .action-cancel": "removeSelf"
+        "click .action-cancel": "removeSelf",
+        "click .action-upload": "upload"
     },
     removeSelf: function(e) {
         if(e && e.preventDefault) { e.preventDefault(); }
         this.remove();
+    },
+    upload: function(e) {
+        if(e && e.preventDefault) { e.preventDefault(); }
+        this.uploader.uploadStoredFiles();
+    },
+    onSubmit: function(event, id, name) {
+        this.model.set('uploadFile', this.$el.fineUploader('getFile', id));
     },
     onError: function(event, id, name, errorReason, xhr) {
         debugger;
