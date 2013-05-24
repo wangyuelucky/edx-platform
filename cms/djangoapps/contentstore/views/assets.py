@@ -143,14 +143,15 @@ def upload_asset(request, org, course, coursename):
     # readback the saved content - we need the database timestamp
     readback = contentstore().find(content.location)
 
-    response_payload = {'displayname': content.name,
+    response_payload = {'success': True,
+                        'displayname': content.name,
                         'uploadDate': get_default_time_display(readback.last_modified_at),
                         'url': StaticContent.get_url_path_from_location(content.location),
                         'thumb_url': StaticContent.get_url_path_from_location(thumbnail_location) if thumbnail_content is not None else None,
                         'msg': 'Upload completed'
                         }
 
-    response = HttpResponse(json.dumps(response_payload))
+    response = HttpResponse(json.dumps(response_payload), mimetype="application/json")
     response['asset_url'] = StaticContent.get_url_path_from_location(content.location)
     return response
 
