@@ -87,6 +87,7 @@ CMS.Views.TextbookEdit = Backbone.View.extend({
 CMS.Views.ChapterEdit = Backbone.View.extend({
     initialize: function() {
         this.template = _.template($("#new-chapter-tpl").text());
+        this.listenTo(this.model, "change", this.render)
     },
     render: function() {
         this.$el.html(this.template({
@@ -114,7 +115,7 @@ CMS.Views.ChapterEdit = Backbone.View.extend({
                 section.escape('name')),
             message: "[asset upload requirements]"
         })
-        var view = new CMS.Views.UploadDialog({model: msg})
+        var view = new CMS.Views.UploadDialog({model: msg, chapter: this.model})
         $(".main-wrapper").append(view.render().el)
     }
 })
@@ -174,7 +175,14 @@ CMS.Views.UploadDialog = Backbone.View.extend({
         this.model.set("uploadPercentage", uploadedBytes/totalBytes);
     },
     onComplete: function(event, id, name, response) {
-        debugger;
+        var chapter = this.options.chapter;
+        if(chapter) {
+            if(!chapter.get("name")) {
+                chapter.set("name", response.displayname);
+            }
+            chapter.set("asset_path", response.url);
+        }
+        this.remove();
     }
 })
 var section = new CMS.Models.Section({
