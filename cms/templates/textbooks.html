@@ -11,9 +11,13 @@
   <script type="text/template" id="new-chapter-tpl">
     <%static:include path="js/chapter.underscore" />
   </script>
+  <script type="text/template" id="upload-dialog-tpl">
+    <%static:include path="js/upload-dialog.underscore" />
+  </script>
 </%block>
 
 <%block name="jsextra">
+<script type="text/javascript" src="${static.url('js/vendor/jquery.fineuploader-3.5.0/jquery.fineuploader-3.5.0.min.js')}"></script>
 <script type="text/javascript">
 window.UPLOAD_ASSET_CALLBACK_URL = "${upload_asset_callback_url}"
 
@@ -60,7 +64,7 @@ CMS.Views.TextbookEdit = Backbone.View.extend({
     events: {
         "submit": "save",
         "click .action-cancel": "remove",
-        "click .add-chapter": "createChapter"
+        "click .action-add-chapter": "createChapter"
     },
     addOne: function(chapter) {
         var view = new CMS.Views.ChapterEdit({model: chapter});
@@ -93,14 +97,90 @@ CMS.Views.ChapterEdit = Backbone.View.extend({
         return this;
     },
     events: {
-        "click .action-close": "removeChapter"
+        "click .action-close": "removeChapter",
+        "click .action-uploadasset": "openUploadDialog",
+        "submit": "uploadAsset"
     },
     removeChapter: function(e) {
         if(e && e.preventDefault) { e.preventDefault(); }
         this.model.collection.remove(this.model);
         return this.remove();
+    },
+    openUploadDialog: function(e) {
+        if(e && e.preventDefault) { e.preventDefault(); }
+        var msg = new CMS.Models.SystemFeedback({
+            intent: "upload",
+            title: _.str.sprintf(gettext("Upload a new asset to %s"),
+                section.escape('name')),
+            message: "[asset upload requirements]"
+        })
+        var view = new CMS.Views.UploadDialog({model: msg})
+        $(".main-wrapper").append(view.render().el)
     }
 })
+CMS.Views.UploadDialog = Backbone.View.extend({
+    initialize: function() {
+        this.template = _.template($("#upload-dialog-tpl").text());
+        //this.listenTo(this.model, "change", this.render);
+    },
+    render: function() {
+        this.$el.html(this.template({
+            title: this.model.escape('title'),
+            message: this.model.escape('message'),
+            upload_url: UPLOAD_ASSET_CALLBACK_URL,
+            uploading: this.model.get('uploading') || false,
+            uploadPercentage: this.model.get('uploadPercentage') || 0,
+        }))
+        this.createUploader();
+        return this;
+    },
+    createUploader: function() {
+        this.uploader = this.$el.fineUploader({
+            debug: true,
+            uploaderType: "basic",
+            request: {
+                endpoint: UPLOAD_ASSET_CALLBACK_URL,
+                inputName: "file",
+                uuidName: "uuid",
+                totalFileSizeName: "size",
+                customHeaders: {
+                    'X-CSRFToken': $.cookie('csrftoken')
+                }
+            },
+            button: this.$(".action-select").get(0),
+            validation: {
+                // allowedExtensions: ['pdf'],
+                sizeLimit: 999999999
+            }
+        });
+        this.uploader
+            .on('error', _.bind(this.onError, this))
+            .on('progress', _.bind(this.onProgress, this))
+            .on('complete', _.bind(this.onComplete, this));
+        return this.uploader;
+    },
+    events: {
+        "click .action-cancel": "removeSelf"
+    },
+    removeSelf: function(e) {
+        if(e && e.preventDefault) { e.preventDefault(); }
+        this.remove();
+    },
+    onError: function(event, id, name, errorReason, xhr) {
+        debugger;
+    },
+    onProgress: function(event, id, name, uploadedBytes, totalBytes) {
+        console.log('completed '+uploadedBytes+' of '+totalBytes);
+        this.model.set("uploadPercentage", uploadedBytes/totalBytes);
+    },
+    onComplete: function(event, id, name, response) {
+        debugger;
+    }
+})
+var section = new CMS.Models.Section({
+    id: "${course.id}",
+    name: "${course.display_name_with_default | h}"
+});
 $(function() {
     $(".new-button").click(function() {
         var textbook = new CMS.Models.Textbook();

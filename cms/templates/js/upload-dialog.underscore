@@ -1,0 +1,10 @@
+<form class="upload-dialog" action="<%= upload_url %>" method="POST">
+  <h3><%= title %></h3>
+  <p><%= message %></p>
+  <a href="#" class="button action-select">Select a File</a>
+  <div class="actions">
+    <input type="submit" class="button action-upload" value="Upload" />
+    <input type="button" class="button action-cancel" value="Cancel" />
+  </div>
+  <% if(uploading) { %>Uploading! <%= uploadPercentage %>%<% } %>
+</form>
