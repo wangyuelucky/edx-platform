@@ -130,7 +130,7 @@ CMS.Views.UploadDialog = Backbone.View.extend({
         // This means that, instead of saving the info in the model object and
         // passing it to the template to be re-rendered, we have to save the element
         // and swap it in to the newly-rendered template, so that we don't lose the
-        // information. It's a hack, but it's necessary. :'(
+        // information. It's a hack, but it's necessary. :(
         var oldInput = this.$("input[type=file]")
         this.$el.html(this.template({
             title: this.model.escape('title'),
@@ -139,7 +139,10 @@ CMS.Views.UploadDialog = Backbone.View.extend({
             uploading: this.model.get('uploading') || false,
             uploadPercentage: this.model.get('uploadPercentage') || 0,
         }))
-        this.createUploader();
+        // only create the uploader if we haven't already started uploading
+        if(!this.model.get('uploading')) {
+            this.createUploader();
+        }
         if(oldInput.length) {
             this.$("input[type=file]").replaceWith(oldInput);
         }
@@ -185,6 +188,7 @@ CMS.Views.UploadDialog = Backbone.View.extend({
     upload: function(e) {
         if(e && e.preventDefault) { e.preventDefault(); }
         this.$el.fineUploader('uploadStoredFiles');
+        this.model.set('uploading', true);
     },
     onSubmit: function(event, id, name) {
         this.model.set('uploadFile', this.$el.fineUploader('getFile', id));
@@ -194,9 +198,10 @@ CMS.Views.UploadDialog = Backbone.View.extend({
     },
     onProgress: function(event, id, name, uploadedBytes, totalBytes) {
         console.log('completed '+uploadedBytes+' of '+totalBytes);
-        this.model.set("uploadPercentage", uploadedBytes/totalBytes);
+        this.model.set("uploadPercentage", uploadedBytes/totalBytes*100);
     },
     onComplete: function(event, id, name, response) {
+        this.model.set('uploading', false);
         var chapter = this.options.chapter;
         if(chapter) {
             if(!chapter.get("name")) {
