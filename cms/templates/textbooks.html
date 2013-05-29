@@ -109,107 +109,97 @@ CMS.Views.ChapterEdit = Backbone.View.extend({
     },
     openUploadDialog: function(e) {
         if(e && e.preventDefault) { e.preventDefault(); }
-        var msg = new CMS.Models.SystemFeedback({
-            intent: "upload",
+        var msg = new CMS.Models.FileUpload({
             title: _.str.sprintf(gettext("Upload a new asset to %s"),
                 section.escape('name')),
             message: "[asset upload requirements]"
         })
         var view = new CMS.Views.UploadDialog({model: msg, chapter: this.model})
-        this.$el.append(view.render().el)
+        $(".wrapper-view").append(view.render().el)
     }
 })
+CMS.Models.FileUpload = Backbone.Model.extend({
+    defaults: {
+        "title": "",
+        "message": "",
+        "selectFile": null,
+        "uploading": false,
+        "uploadedBytes": 0,
+        "totalBytes": 0,
+    }
+});
 CMS.Views.UploadDialog = Backbone.View.extend({
     initialize: function() {
         this.template = _.template($("#upload-dialog-tpl").text());
         this.listenTo(this.model, "change", this.render);
     },
     render: function() {
-        // Browsers have a lot of security around <input type="file"> DOM elements,
-        // and they forbid Javascript from setting the file path of such an element.
-        // This means that, instead of saving the info in the model object and
-        // passing it to the template to be re-rendered, we have to save the element
-        // and swap it in to the newly-rendered template, so that we don't lose the
-        // information. It's a hack, but it's necessary. :(
-        var oldInput = this.$("input[type=file]")
+        // some browsers (like Chrome) allow you to assign to the .files attribute
+        // of an <input type="file"> DOM element -- for those browsers, we can
+        // create a new DOM element and assign the old content to it. Other browsers
+        // (like Firefox) make this attribute read-only, and we have to save the
+        // old DOM element in order to save it's content. For compatibility purposes,
+        // we'll just save the old element every time.
+        var oldInput = this.$("input[type=file]").get(0), selectedFile;
+        if (oldInput && oldInput.files.length) {
+            selectedFile = oldInput.files[0];
+        }
         this.$el.html(this.template({
+            url: UPLOAD_ASSET_CALLBACK_URL,
             title: this.model.escape('title'),
             message: this.model.escape('message'),
-            uploadFile: this.model.get('uploadFile'),
-            uploading: this.model.get('uploading') || false,
-            uploadPercentage: this.model.get('uploadPercentage') || 0,
+            selectedFile: selectedFile,
+            uploading: this.model.get('uploading'),
+            uploadedBytes: this.model.get('uploadedBytes'),
+            totalBytes: this.model.get('totalBytes'),
         }))
-        // only create the uploader if we haven't already started uploading
-        if(!this.model.get('uploading')) {
-            this.createUploader();
+        if (oldInput) {
+            this.$('input[type=file]').replaceWith(oldInput);
         }
-        if(oldInput.length) {
-            this.$("input[type=file]").replaceWith(oldInput);
-        }
+
         return this;
     },
-    createUploader: function() {
-        this.uploader = this.$el.fineUploader({
-            debug: true,
-            uploaderType: "basic",
-            request: {
-                endpoint: UPLOAD_ASSET_CALLBACK_URL,
-                inputName: "file",
-                uuidName: "uuid",
-                totalFileSizeName: "size",
-                customHeaders: {
-                    'X-CSRFToken': $.cookie('csrftoken')
-                }
-            },
-            button: this.$(".action-select"),
-            multiple: false,
-            autoUpload: false,
-            validation: {
-                // allowedExtensions: ['pdf'],
-                sizeLimit: 999999999
-            }
-        });
-        this.uploader
-            .on('submit', _.bind(this.onSubmit, this))
-            .on('error', _.bind(this.onError, this))
-            .on('progress', _.bind(this.onProgress, this))
-            .on('complete', _.bind(this.onComplete, this));
-        this.$el.fineUploader('addFiles', this.model.get('uploadFile'))
-        return this.uploader;
-    },
     events: {
+        "change input[type=file]": "selectFile",
         "click .action-cancel": "removeSelf",
         "click .action-upload": "upload"
+    },
+    selectFile: function(e) {
+        this.model.set('fileList', e.target.files)
     },
     removeSelf: function(e) {
         if(e && e.preventDefault) { e.preventDefault(); }
         this.remove();
     },
     upload: function(e) {
-        if(e && e.preventDefault) { e.preventDefault(); }
-        this.$el.fineUploader('uploadStoredFiles');
         this.model.set('uploading', true);
+        this.$("form").ajaxSubmit({
+            success: _.bind(this.success, this),
+            error: _.bind(this.error, this),
+            uploadProgress: _.bind(this.progress, this),
+        });
     },
-    onSubmit: function(event, id, name) {
-        this.model.set('uploadFile', this.$el.fineUploader('getFile', id));
+    progress: function(event, position, total, percentComplete) {
+        this.model.set({
+            "uploadedBytes": position,
+            "totalBytes": total,
+        })
     },
-    onError: function(event, id, name, errorReason, xhr) {
-        debugger;
-    },
-    onProgress: function(event, id, name, uploadedBytes, totalBytes) {
-        console.log('completed '+uploadedBytes+' of '+totalBytes);
-        this.model.set("uploadPercentage", uploadedBytes/totalBytes*100);
-    },
-    onComplete: function(event, id, name, response) {
+    success: function(response, statusText, xhr, form) {
         this.model.set('uploading', false);
         var chapter = this.options.chapter;
         if(chapter) {
+            var options = {}
             if(!chapter.get("name")) {
-                chapter.set("name", response.displayname);
+                options.name = response.displayname;
             }
-            chapter.set("asset_path", response.url);
+            options.asset_path = response.url;
+            chapter.set(options);
         }
         this.remove();
+    },
+    error: function() {
+        this.model.set("uploading", false);
     }
 })
 var section = new CMS.Models.Section({
