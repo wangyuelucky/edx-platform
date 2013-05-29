@@ -116,7 +116,7 @@ CMS.Views.ChapterEdit = Backbone.View.extend({
             message: "[asset upload requirements]"
         })
         var view = new CMS.Views.UploadDialog({model: msg, chapter: this.model})
-        $(".main-wrapper").append(view.render().el)
+        this.$el.append(view.render().el)
     }
 })
 CMS.Views.UploadDialog = Backbone.View.extend({
@@ -125,6 +125,13 @@ CMS.Views.UploadDialog = Backbone.View.extend({
         this.listenTo(this.model, "change", this.render);
     },
     render: function() {
+        // Browsers have a lot of security around <input type="file"> DOM elements,
+        // and they forbid Javascript from setting the file path of such an element.
+        // This means that, instead of saving the info in the model object and
+        // passing it to the template to be re-rendered, we have to save the element
+        // and swap it in to the newly-rendered template, so that we don't lose the
+        // information. It's a hack, but it's necessary. :'(
+        var oldInput = this.$("input[type=file]")
         this.$el.html(this.template({
             title: this.model.escape('title'),
             message: this.model.escape('message'),
@@ -133,6 +140,9 @@ CMS.Views.UploadDialog = Backbone.View.extend({
             uploadPercentage: this.model.get('uploadPercentage') || 0,
         }))
         this.createUploader();
+        if(oldInput.length) {
+            this.$("input[type=file]").replaceWith(oldInput);
+        }
         return this;
     },
     createUploader: function() {
@@ -174,7 +184,7 @@ CMS.Views.UploadDialog = Backbone.View.extend({
     },
     upload: function(e) {
         if(e && e.preventDefault) { e.preventDefault(); }
-        this.uploader.uploadStoredFiles();
+        this.$el.fineUploader('uploadStoredFiles');
     },
     onSubmit: function(event, id, name) {
         this.model.set('uploadFile', this.$el.fineUploader('getFile', id));
