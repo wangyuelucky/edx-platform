@@ -3,7 +3,7 @@ define(['logme', 'update_input', 'targets'], function (logme, updateInput, Targe
 return {
     'moveDraggableTo': function (moveType, target, funcCallback) {
         var self = this,
-            container = (this.originalConfigObj.icon.length) ? this.labelEl 
+            container = (this.originalConfigObj.icon.length) ? this.labelEl
                                                              : this.iconEl,
             offset, adjustLabelEl;
 
@@ -91,7 +91,7 @@ return {
                 'padding-right': 8,
                 'border': '1px solid black'
             });
-            
+
             if (!this.originalConfigObj.isMathJax) {
                 adjustLabelEl.call(this);
             }
@@ -111,7 +111,7 @@ return {
                 this.iconEl.html(this.originalConfigObj.label);
             }
         }
-        
+
         if (moveType === 'target') {
             target.addDraggable(this);
         } else {
@@ -132,15 +132,15 @@ return {
         if ($.isFunction(funcCallback) === true) {
             funcCallback();
         }
-        
+
         if (this.originalConfigObj.isMathJax) {
             MathJax.Hub.Queue(
                 ["Typeset", MathJax.Hub, container[0]],
                 [function(){
-                
+
                     if (self.labelEl !== null) {
                         adjustLabelEl.call(self);
-                    }                    
+                    }
 
                     container
                     .children()
@@ -165,8 +165,8 @@ return {
                 }]
             );
         }
-        
-        
+
+
     },
 
     // At this point the mouse was realeased, and we need to check
@@ -343,49 +343,26 @@ return {
         }
     },
 
-    // Go through all of the draggables subtract 1 from the z-index
-    // of all whose z-index is higher than the old z-index of the
-    // current element. After, set the z-index of the current
-    // element to 1 + N (where N is the number of draggables - i.e.
-    // the highest z-index possible).
-    //
     // This will make sure that after releasing a draggable, it
     // will be on top of all of the other draggables. Also, the
     // ordering of the visibility (z-index) of the other draggables
     // will not change.
     'correctZIndexes': function () {
-        var c1, highestZIndex;
+        var _this = this,
+            highestZIndex = -10000;
 
-        highestZIndex = -10000;
-
-        if (this.state.config.individualTargets === true) {
-            if (this.onTarget.draggableList.length > 0) {
-                for (c1 = 0; c1 < this.onTarget.draggableList.length; c1 += 1) {
-                    if (
-                        (this.onTarget.draggableList[c1].zIndex > highestZIndex) &&
-                        (this.onTarget.draggableList[c1].zIndex !== 1000)
-                    ) {
-                        highestZIndex = this.onTarget.draggableList[c1].zIndex;
-                    }
-                }
-            } else {
-                highestZIndex = 0;
+        $.each(this.state.draggables, function (index, draggable) {
+            if (
+                (draggable.uniqueId != _this.uniqueId) &&
+                (draggable.zIndex > highestZIndex) &&
+                (draggable.zIndex !== 1000)
+            ) {
+                highestZIndex = draggable.zIndex;
             }
-        } else {
-            for (c1 = 0; c1 < this.state.draggables.length; c1++) {
-                if (this.inContainer === false) {
-                    if (
-                        (this.state.draggables[c1].zIndex > highestZIndex) &&
-                        (this.state.draggables[c1].zIndex !== 1000)
-                    ) {
-                        highestZIndex = this.state.draggables[c1].zIndex;
-                    }
-                }
-            }
-        }
+        });
 
         if (highestZIndex === -10000) {
-            highestZIndex = 0;
+            highestZIndex = 1;
         }
 
         this.zIndex = highestZIndex + 1;
@@ -402,7 +379,7 @@ return {
     'moveBackToSlider': function () {
         var c1,
             posTop,
-            container = (this.originalConfigObj.icon.length) ? this.labelEl 
+            container = (this.originalConfigObj.icon.length) ? this.labelEl
                                                              : this.iconEl;
 
         Targets.destroyTargetField(this);
@@ -434,18 +411,18 @@ return {
                 'height': this.iconHeightSmall
             });
         }
-        
+
         if(!this.state.config.separateLabels){
             if(this.state.config.autoResize){
                 posTop = ((this.labelEl !== null && !!this.iconImgEl) ? 37.5 : 50) - 0.5 * this.iconHeightSmall;
-                
+
             } else {
                 posTop = ((!!this.iconImgEl) ? 37.5 : 50) - 0.5 * this.iconHeightSmall;
             }
         } else {
             posTop = (this.iconImgEl) ? ((this.labelEl !== null || !this.state.config.autoResize) ? 37.5 : 50) - 0.5 * this.iconHeightSmall : 70;
         }
-        
+
         this.iconEl.css({
             'border': 'none',
             'background-color': 'transparent',
@@ -500,11 +477,11 @@ return {
         }
 
         this.inContainer = true;
-        
+
         if (this.originalConfigObj.isMathJax) {
             MathJax.Hub.Queue(
                 ["Typeset", MathJax.Hub, container[0]],
-                [function(){                    
+                [function(){
                     container
                     .children()
                     .filter('span, div')
