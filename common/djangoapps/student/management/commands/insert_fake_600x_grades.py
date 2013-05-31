@@ -82,8 +82,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self._delete_all_jds()
-        for grade_sub in range(11):
-            self._create_n_jds(1, grade_sub * 10)
+        res = 50
+        for grade_sub in range(res + 1):
+            self._create_n_jds(1, grade_sub * 100 / res)
 
 
 
