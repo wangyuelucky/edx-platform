@@ -4,6 +4,7 @@
 
 <%block name="headextra">
   <%static:css group='course'/>
+  <script type="text/javascript" src="${static.url('js/vendor/underscore-min.js')}"></script>
   <script type="text/javascript" src="${static.url('js/vendor/flot/jquery.flot.js')}"></script>
   <script type="text/javascript" src="${static.url('js/vendor/flot/jquery.flot.axislabels.js')}"></script>
   <script type="text/javascript" src="${static.url('js/vendor/jquery-jvectormap-1.1.1/jquery-jvectormap-1.1.1.min.js')}"></script>
@@ -447,20 +448,14 @@ function goto( mode)
 ##-----------------------------------------------------------------------------
 
 %if modeflag.get('Grade Distribution'):
-  <p> Grade Distribution </p>
-
-  %if analytics_results.get('exists', None) != None:
-    <p> ${analytics_results['exists']} </p>
-  %endif
-
   %if analytics_results.get('gradetable', None) != None:
-    <p> ${analytics_results['gradetable']} </p>
+    ##<p> ${analytics_results['gradetable']} </p>
   %endif
 
   %if analytics_results.get('gstudents', None) != None:
     <div class="viz-grade-distrubtion"></div>
 
-    <p> ${analytics_results['gstudents']} </p>
+    ##<p> ${analytics_results['gstudents']} </p>
     <p> ${analytics_results['gbuckets_json']} </p>
 
     <script type="text/javascript">

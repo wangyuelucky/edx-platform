@@ -39,6 +39,7 @@ ${progress_graph.body(grade_summary, course.grade_cutoffs, "grade-detail-graph",
       %endif
 
       <ol class="chapters">
+        <p>${courseware_summary}</p>
         %for chapter in courseware_summary:
         %if not chapter['display_name'] == "hidden":
         <li>
