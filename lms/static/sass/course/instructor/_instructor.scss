@@ -10,6 +10,11 @@
     h1 {
       @extend .top-header;
     }
+
+    .viz-grade-distrubtion {
+      width: 200px;
+      height: 200px;
+    }
 	}
 }
 

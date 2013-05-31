@@ -37,10 +37,10 @@ table.stat_table td {
 	border-color: #666666;
 	background-color: #ffffff;
 }
-.divScroll {  
-	height: 200px;  
-	overflow: scroll;  
-}  
+.divScroll {
+	height: 200px;
+	overflow: scroll;
+}
 
 a.selectedmode { background-color: yellow; }
 
@@ -112,7 +112,8 @@ function goto( mode)
           <a href="#" onclick="goto('Data');" class="${modeflag.get('Data')}">DataDump</a> |
           <a href="#" onclick="goto('Manage Groups');" class="${modeflag.get('Manage Groups')}">Manage Groups</a>
           %if settings.MITX_FEATURES.get('ENABLE_INSTRUCTOR_ANALYTICS'):
-             | <a href="#" onclick="goto('Analytics');" class="${modeflag.get('Analytics')}">Analytics</a> 
+             | <a href="#" onclick="goto('Analytics');" class="${modeflag.get('Analytics')}">Analytics</a>
+             | <a href="#" onclick="goto('Grade Distribution');" class="${modeflag.get('Grade Distribution')}">Grade Distribution</a>
           %endif
 	  ]
     </h2>
@@ -443,6 +444,42 @@ function goto( mode)
   %endif
 %endif
 
+##-----------------------------------------------------------------------------
+
+%if modeflag.get('Grade Distribution'):
+  <p> Grade Distribution </p>
+
+  %if analytics_results.get('exists', None) != None:
+    <p> ${analytics_results['exists']} </p>
+  %endif
+
+  %if analytics_results.get('gradetable', None) != None:
+    <p> ${analytics_results['gradetable']} </p>
+  %endif
+
+  %if analytics_results.get('gstudents', None) != None:
+    <div class="viz-grade-distrubtion"></div>
+
+    <p> ${analytics_results['gstudents']} </p>
+    <p> ${analytics_results['gbuckets_json']} </p>
+
+    <script type="text/javascript">
+      $(function () {
+        console.log('starting dash viz')
+        var gd = new InstructorDashViz.GradeDistribution()
+        gd.plot($('.viz-grade-distrubtion'), ${analytics_results['gbuckets_json']})
+      });
+    </script>
+  %endif
+
+  ##${ grade_cutoffs = {'F': 0.3, 'C': 0.5, 'B': 0.8, 'A': 1.0} }
+
+  <div class="grade-distribution-chart">
+    ##<p> ${grade_cutoffs} <p>
+  </div>
+%endif
+
+
 %if modeflag.get('Analytics In Progress'):
 
   ##This is not as helpful as it could be -- let's give full point distribution
@@ -532,7 +569,7 @@ function goto( mode)
 
 %endif
 
-##----------------------------------------------------------------------------- 
+##-----------------------------------------------------------------------------
 
 %if datatable and modeflag.get('Psychometrics') is None:
 
