@@ -6,7 +6,7 @@ class @VideoPlayerAlpha extends SubviewAlpha
     # we must pause the player (stop setInterval() method).
     if (window.OldVideoPlayerAlpha) and (window.OldVideoPlayerAlpha.onPause)
       window.OldVideoPlayerAlpha.onPause()
-    window.OldVideoPlayerAlpha = this
+    window.OldVideoPlayerAlpha = @
 
     if @video.videoType is 'youtube'
       @PlayerState = YT.PlayerState
@@ -29,7 +29,7 @@ class @VideoPlayerAlpha extends SubviewAlpha
     $(@progressSlider).bind('slide_seek', @onSeek)
     if @volumeControl
       $(@volumeControl).bind('volumeChange', @onVolumeChange)
-    $(document).keyup @bindExitFullScreen
+    $(document.documentElement).keyup @bindExitFullScreen
 
     @$('.add-fullscreen').click @toggleFullScreen
     @addToolTip() unless onTouchBasedDevice()
@@ -120,6 +120,8 @@ class @VideoPlayerAlpha extends SubviewAlpha
           # NOTE: It is my strong belief that in the future YouTube Flash player will
           # not get speed changes. This is a dying technology. So we can safely use
           # this indirect method to determine player mode.
+
+
           availableSpeeds = @player.getAvailablePlaybackRates()
           prev_player_type = $.cookie('prev_player_type')
           if availableSpeeds.length > 1
@@ -281,7 +283,7 @@ class @VideoPlayerAlpha extends SubviewAlpha
     @player.pauseVideo() if @player.pauseVideo
 
   duration: ->
-    duration = @player.getDuration()
+    duration = @player.getDuration() if @player.getDuration
     if isFinite(duration) is false
       duration = @video.getDuration()
     duration
