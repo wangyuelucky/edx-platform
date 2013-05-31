@@ -452,26 +452,25 @@ function goto( mode)
     ##<p> ${analytics_results['gradetable']} </p>
   %endif
 
-  %if analytics_results.get('gstudents', None) != None:
-    <div class="viz-grade-distrubtion"></div>
+  %if analytics_results.get('visualization_data', None) != None:
 
-    ##<p> ${analytics_results['gstudents']} </p>
-    <p> ${analytics_results['gbuckets_json']} </p>
+    %if analytics_results['visualization_data'].get('dummy_numbers', None) != None:
+      ## <p> ${analytics_results['visualization_data']['dummy_numbers']} </p>
+    %endif
 
-    <script type="text/javascript">
-      $(function () {
-        console.log('starting dash viz')
-        var gd = new InstructorDashViz.GradeDistribution()
-        gd.plot($('.viz-grade-distrubtion'), ${analytics_results['gbuckets_json']})
-      });
-    </script>
+    %if analytics_results['visualization_data'].get('letter_buckets', None) != None:
+      <p> Grade Distribution </p>
+      <div class="viz-grade-distrubtion"></div>
+      ## <p> ${analytics_results['visualization_data']['letter_buckets']} </p>
+      <script type="text/javascript">
+        $(function () {
+          var gd = new InstructorDashViz.GradeDistribution()
+          gd.plot($('.viz-grade-distrubtion'), ${analytics_results['visualization_data']['letter_buckets']})
+        });
+      </script>
+    %endif
+
   %endif
-
-  ##${ grade_cutoffs = {'F': 0.3, 'C': 0.5, 'B': 0.8, 'A': 1.0} }
-
-  <div class="grade-distribution-chart">
-    ##<p> ${grade_cutoffs} <p>
-  </div>
 %endif
 
 

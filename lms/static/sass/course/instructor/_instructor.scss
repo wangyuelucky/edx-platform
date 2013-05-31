@@ -1,9 +1,9 @@
 .instructor-dashboard-wrapper {
-	@extend .table-wrapper;
-	display: table;
+  @extend .table-wrapper;
+  display: table;
 
-	section.instructor-dashboard-content {
-		@extend .content;
+  section.instructor-dashboard-content {
+    @extend .content;
     padding: 40px;
     width: 100%;
 
@@ -12,9 +12,13 @@
     }
 
     .viz-grade-distrubtion {
-      width: 200px;
+      width: 300px;
       height: 200px;
+
+      .tickLabels .xAxis .tickLabel {
+        margin-left: 10%;
+      }
     }
-	}
+  }
 }
 

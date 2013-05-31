@@ -6,11 +6,11 @@ class @InstructorDashViz.GradeDistribution
 
   plot: (placeholder, data) ->
     console.log('plotting InstructorDashViz.GradeDistribution')
-    window.data = data
-    $.plot placeholder, [
-      data: data
+
+    $.plot placeholder, [data.data], {
       bars: {show: true}
-    ]
+      xaxis: tickFormatter: (val, axis) -> (data.ascending_grades.concat [''])[val]
+    }
 
   # plot: (placeholder, data) ->
   #   # TODO invented grade buckets
