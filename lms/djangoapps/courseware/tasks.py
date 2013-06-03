@@ -4,10 +4,11 @@ from time import time
 from sys import exc_info
 from traceback import format_exc
 
-from django.contrib.auth.models import User
-from django.db import transaction
 from celery import task, current_task
 from celery.utils.log import get_task_logger
+from django.contrib.auth.models import User
+from django.db import transaction
+from dogapi import dog_stats_api
 
 from xmodule.modulestore.django import modulestore
 
@@ -113,9 +114,10 @@ def _update_problem_module_state_internal(course_id, module_state_key, student_i
         num_attempted += 1
         # There is no try here:  if there's an error, we let it throw, and the task will
         # be marked as FAILED, with a stack trace.
-        if update_fcn(module_descriptor, module_to_update, xmodule_instance_args):
-            # If the update_fcn returns true, then it performed some kind of work.
-            num_updated += 1
+        with dog_stats_api.timer('courseware.tasks.module.{0}.time'.format(action_name)):
+            if update_fcn(module_descriptor, module_to_update, xmodule_instance_args):
+                # If the update_fcn returns true, then it performed some kind of work.
+                num_updated += 1
 
         # update task status:
         current_task.update_state(state='PROGRESS', meta=get_task_progress())
@@ -162,8 +164,9 @@ def _update_problem_module_state(entry_id, course_id, module_state_key, student_
     # now that we have an entry we can try to catch failures:
     task_progress = None
     try:
-        task_progress = _update_problem_module_state_internal(course_id, module_state_key, student_ident, update_fcn,
-                                                              action_name, filter_fcn, xmodule_instance_args)
+        with dog_stats_api.timer('courseware.tasks.module.{0}.overall_time'.format(action_name)):
+            task_progress = _update_problem_module_state_internal(course_id, module_state_key, student_ident, update_fcn,
+                                                                  action_name, filter_fcn, xmodule_instance_args)
     except Exception:
         # try to write out the failure to the entry before failing
         exception_type, exception, traceback = exc_info()

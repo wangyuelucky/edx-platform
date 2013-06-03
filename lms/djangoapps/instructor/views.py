@@ -1324,10 +1324,10 @@ def get_background_task_table(course_id, problem_url, student=None):
         for i, course_task in enumerate(history_entries):
             # get duration info, if known:
             duration_ms = 'unknown'
-            if hasattr(course_task, 'task_outputs'):
-                task_outputs = json.loads(course_task.task_output)
-                if 'duration_ms' in task_outputs:
-                    duration_ms = task_outputs['duration_ms']
+            if hasattr(course_task, 'task_output'):
+                task_output = json.loads(course_task.task_output)
+                if 'duration_ms' in task_output:
+                    duration_ms = task_output['duration_ms']
             # get progress status message:
             success, message = task_submit.get_task_completion_message(course_task)
             if success:
