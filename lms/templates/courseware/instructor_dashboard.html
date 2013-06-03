@@ -470,6 +470,18 @@ function goto( mode)
       </script>
     %endif
 
+    %if analytics_results['visualization_data'].get('enrollment_change', None) != None:
+      <p> Enrollment Change </p>
+      <div class="viz-enrollment-change"></div>
+      <p> ${analytics_results['visualization_data']['enrollment_change']} </p>
+      <script type="text/javascript">
+        $(function () {
+          var gd = new InstructorDashViz.EnrollmentChange()
+          gd.plot($('.viz-enrollment-change'), ${analytics_results['visualization_data']['enrollment_change']})
+        });
+      </script>
+    %endif
+
   %endif
 %endif
 

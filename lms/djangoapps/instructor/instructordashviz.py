@@ -1,8 +1,11 @@
 # Fetch and format data for the instructor dashboard visualizations
 import json
+from time import mktime
 from itertools import groupby
+from django.db.models import Q
 
 from django.contrib.auth.models import User, Group
+from track.models import TrackingLog
 import courseware.grades as grades
 from courseware.courses import get_course_by_id
 
@@ -47,6 +50,43 @@ class InstructorDashViz(object):
         else:
             return json.dumps(None)
 
+    def enrollment_change(self):
+        course_id = self.course_id
+        enroll_string   = '{"POST": {"course_id": ["%s"], "enrollment_action": ["enroll"]}, "GET": {}}' % course_id
+        unenroll_string = '{"POST": {"course_id": ["%s"], "enrollment_action": ["unenroll"]}, "GET": {}}' % course_id
+
+        tracks = TrackingLog.objects.filter(
+            Q(event=enroll_string) | Q(event=unenroll_string),
+            event_type='/change_enrollment'
+            ).order_by('time')
+
+        def extract_from_trackinglog(tracking_log):
+            if tracking_log.event == enroll_string:
+                state = 'enroll'
+            elif tracking_log.event == unenroll_string:
+                state = 'unenroll'
+            else:
+                state = 'unknown'
+
+            convert_time = lambda time: int(mktime(time.timetuple()))
+
+            return (convert_time(tracking_log.time), state)
+
+        track_events = map(extract_from_trackinglog, tracks)
+        track_events_numbered = [[time_int, {'enroll': 1, 'unenroll': -1}[state]] for [time_int, state] in track_events]
+
+        # total enrollment (as calculated from starting at 0 and counting changes) at a given time
+        integral = []
+        enrollment = 0
+        for [time_int, increment] in track_events_numbered:
+            enrollment += increment
+            integral.append([time_int, enrollment])
+
+        output = {}
+        output['track_events'] = track_events
+        output['track_events_numbered'] = track_events_numbered
+        output['data'] = integral
+        return json.dumps(output)
 
 # def index_without_error(list, item):
 #     try:
