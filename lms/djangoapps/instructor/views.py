@@ -622,51 +622,14 @@ def instructor_dashboard(request, course_id):
 
 
     if idash_mode == 'Grade Distribution':
-        # analytics_results['exists'] = 'This exists!'
-
-        # gradetable = get_student_grade_summary_data(request, course, course_id, get_grades=True, use_offline=use_offline)
-        # gradetable['title'] = 'Summary Grades of students enrolled in {0}'.format(course_id)
-
-        # analytics_results['gradetable'] = gradetable
-
-        # # naive grade sum
-        # def gstudent_from_row(student_row):
-        #     gstudent = {}
-        #     gstudent['id'], gstudent['name'] = student_row[0:2]
-        #     gstudent['grade'] = sum(student_row[5:])
-        #     return gstudent
-
-        # analytics_results['gstudents'] = map(gstudent_from_row, gradetable['data'])
-        # analytics_results['gstudents_json'] = json.dumps(analytics_results['gstudents'])
-
-        # def gstudent_bucket(gstudents):
-        #     def bucket_grade(grade):
-        #         if grade >= 0.9:
-        #             return 'A'
-        #         elif grade >= 0.8:
-        #             return 'B'
-        #         elif grade >= 0.5:
-        #             return 'C'
-        #         else:
-        #             return 'F'
-
-        #     grade_order_letter = ['A', 'B', 'C', 'F']
-        #     grades_collection = map(lambda student_gdata: bucket_grade(student_gdata['grade']), gstudents)
-        #     grades_bucketcount = map(lambda letter: len(filter(lambda student_letter: student_letter == letter, grades_collection)), grade_order_letter)
-        #     return zip(range(len(grades_bucketcount)), grades_bucketcount)
-
-        # analytics_results['gbuckets_json'] = json.dumps(gstudent_bucket(analytics_results['gstudents']))
-
-        # enrolled_students = User.objects.filter(courseenrollment__course_id=course_id).prefetch_related("groups").order_by('username')
-
         analytics_results['visualization_data'] = {}
         vd = analytics_results['visualization_data']
 
         idv = InstructorDashViz(course_id, request)
 
-        vd['dummy_numbers'] = idv.dummy_numbers()
+        # vd['dummy_numbers'] = idv.dummy_numbers()
         vd['letter_buckets'] = idv.letter_buckets()
-        vd['enrollment_change'] = idv.enrollment_change()
+        # vd['enrollment_change'] = idv.enrollment_change()
 
 
     #----------------------------------------

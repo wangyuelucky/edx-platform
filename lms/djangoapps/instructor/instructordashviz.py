@@ -5,13 +5,19 @@ from itertools import groupby
 from django.db.models import Q
 
 from django.contrib.auth.models import User, Group
+from instructor.models import CourseGradesCache
 from track.models import TrackingLog
 import courseware.grades as grades
 from courseware.courses import get_course_by_id
 
-# one instance per request
-# gathers data and formats it for the javascript graphs consumption
+
 class InstructorDashViz(object):
+    """
+    Gather data and format it for js graph consumption.
+
+    One instance per request.
+    """
+
     def __init__(self, course_id, request=None):
         self.course_id = course_id
         self.request = request
@@ -20,6 +26,8 @@ class InstructorDashViz(object):
         return [50, 40, 50, 50, 60, 40]
 
     def letter_buckets(self):
+        cache = CourseGradesCache.objects.get_or_create(course_id=self.course_id)[0].get_updated(self.request)
+
         enrolled_students = User.objects.filter(courseenrollment__course_id=self.course_id).prefetch_related("groups").order_by('username')
         course_descriptor = get_course_by_id(self.course_id)
         ascending_grades = sorted(course_descriptor.grade_cutoffs, key=lambda x: course_descriptor.grade_cutoffs[x], reverse=False)
@@ -36,7 +44,8 @@ class InstructorDashViz(object):
             return sorted(d.items(), key=lambda item: key_order.index(item[0]))
 
         if len(enrolled_students) > 0:
-            grade_objs = [grades.grade(student, self.request, course=course_descriptor) for student in enrolled_students]
+            # grade_objs = [grades.grade(student, self.request, course=course_descriptor) for student in enrolled_students]
+            grade_objs = json.loads(cache.state)['student_grades']
             student_letters = [grade_obj['grade'] for grade_obj in grade_objs]
             student_letters = map(lambda l: l if l in ascending_grades else 'F', student_letters)
             letter_buckets = format_dict_by_key_order(group_list(student_letters), ascending_grades)
