@@ -4,7 +4,6 @@ Tests of responsetypes
 
 from datetime import datetime
 import json
-from nose.plugins.skip import SkipTest
 import os
 import random
 import unittest
@@ -18,6 +17,9 @@ from capa.responsetypes import LoncapaProblemError, \
 from capa.correctmap import CorrectMap
 from capa.util import convert_files_to_filenames
 from capa.xqueue_interface import dateformat
+
+from .response_xml_factory import DraganddropResponseXmlFactory
+from capa.inputtypes import DragAndDropInput
 
 
 class ResponseTest(unittest.TestCase):
@@ -1348,3 +1350,24 @@ class AnnotationResponseTest(ResponseTest):
                              msg="%s should be marked %s" % (answer_id, expected_correctness))
             self.assertEqual(expected_points, actual_points,
                              msg="%s should have %d points" % (answer_id, expected_points))
+
+
+class DraganddropResponseTest(ResponseTest):
+    """Test for DraganddropResponseXmlFactory."""
+    xml_factory_class = DraganddropResponseXmlFactory
+
+    def test_grade(self):
+        problem = self.build_problem()
+
+        dnd_input = problem.inputs.values()[0]
+        self.assertIsInstance(dnd_input, DragAndDropInput)
+        self.assertEqual(dnd_input.xml.tag, 'drag_and_drop_input')
+
+        dnd_input_children = dnd_input.xml.getchildren()
+        self.assertEqual(len(dnd_input_children), 9)
+        self.assertEqual(
+            len([i for i in dnd_input_children if i.tag == 'draggable']),
+            3)
+        self.assertEqual(
+            len([i for i in dnd_input_children if i.tag == 'target']),
+            6)

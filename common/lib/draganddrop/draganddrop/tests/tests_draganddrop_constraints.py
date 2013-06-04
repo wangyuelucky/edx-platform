@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
+"""Tests for DnD constraints."""
 
 import unittest
 import json
-from lxml import etree
 
-from ..draganddrop_constraints import get_all_dragabbles
+from ..draganddrop_constraints import get_all_dragabbles, BadProperty
 from ..draganddrop_rules import grade
 
 
 class TestDragAndDropConstraints(unittest.TestCase):
+    """Tests for DnD constraints."""
     def test_grid_correct(self):
-        raw_xml = '''
+        xml = """
         <customresponse>
             <text>
                 <h4>Babies and Sun</h4><br/>
@@ -42,9 +43,7 @@ class TestDragAndDropConstraints(unittest.TestCase):
         ]]>
             </answer>
         </customresponse>
-        '''
-
-        xml = etree.fromstring(raw_xml)
+        """
 
         correct_answer = [
             {
@@ -56,14 +55,14 @@ class TestDragAndDropConstraints(unittest.TestCase):
             }
         ]
 
-        constraints_raw = '''[
+        constraints_raw = """[
             dragabbles['sun'].count == 1,
             dragabbles['baby'].count == 2,
             dragabbles['sun'].on('base_target')[0].y <
                 dragabbles['baby'].on('base_target')[0].y,
             dragabbles['sun'].on('base_target')[0].y <
                 dragabbles['baby'].on('base_target')[1].y
-        ]'''
+        ]"""
 
         # Correct
         user_input = json.dumps([
@@ -106,7 +105,7 @@ class TestDragAndDropConstraints(unittest.TestCase):
         self.assertEqual(dragabbles['baby'].on('base_target')[1].y, 415)
 
     def test_grid_fail(self):
-        raw_xml = '''
+        xml = """
         <customresponse>
             <text>
                 <h4>Babies and Sun</h4><br/>
@@ -138,18 +137,19 @@ class TestDragAndDropConstraints(unittest.TestCase):
         ]]>
             </answer>
         </customresponse>
-        '''
+        """
 
-        xml = etree.fromstring(raw_xml)
-
-        constraints_raw = '''[
-            dragabbles['sun'].count == 1,
-            dragabbles['baby'].count == 2,
-            dragabbles['sun'].on('base_target')[0].y <
+        def run_constraints(dragabbles):
+            """Execute constraints."""
+            constraints_raw = [
+                dragabbles['sun'].count == 1,
+                dragabbles['baby'].count == 2,
+                dragabbles['sun'].on('base_target')[0].y <
                 dragabbles['baby'].on('base_target')[0].y,
-            dragabbles['sun'].on('base_target')[0].y <
+                dragabbles['sun'].on('base_target')[0].y <
                 dragabbles['baby'].on('base_target')[1].y
-        ]'''
+            ]
+            return all(constraints_raw)
 
         # Correct
         user_input = json.dumps([
@@ -158,7 +158,7 @@ class TestDragAndDropConstraints(unittest.TestCase):
             {'baby': 'base_target{20}{20}'}
         ])
         dragabbles = get_all_dragabbles(user_input, xml)
-        self.assertTrue(all(eval(constraints_raw)))
+        self.assertTrue(run_constraints(dragabbles))
 
         # Fail
         user_input = json.dumps([
@@ -166,7 +166,8 @@ class TestDragAndDropConstraints(unittest.TestCase):
             {'baby': 'base_target{20}{20}'}
         ])
         dragabbles = get_all_dragabbles(user_input, xml)
-        self.assertFalse(all(eval(constraints_raw)))
+
+        self.assertFalse(run_constraints(dragabbles))
 
         # Fail
         user_input = json.dumps([
@@ -174,7 +175,8 @@ class TestDragAndDropConstraints(unittest.TestCase):
             {'baby': 'base_target{20}{20}'}
         ])
         dragabbles = get_all_dragabbles(user_input, xml)
-        self.assertFalse(all(eval(constraints_raw)))
+
+        self.assertFalse(run_constraints(dragabbles))
 
         # Fail
         user_input = json.dumps([
@@ -184,7 +186,8 @@ class TestDragAndDropConstraints(unittest.TestCase):
             {'baby': 'base_target{20}{20}'}
         ])
         dragabbles = get_all_dragabbles(user_input, xml)
-        self.assertFalse(all(eval(constraints_raw)))
+
+        self.assertFalse(run_constraints(dragabbles))
 
         # Fail
         user_input = json.dumps([
@@ -193,10 +196,11 @@ class TestDragAndDropConstraints(unittest.TestCase):
             {'baby': 'base_target{20}{20}'}
         ])
         dragabbles = get_all_dragabbles(user_input, xml)
-        self.assertFalse(all(eval(constraints_raw)))
+
+        self.assertFalse(run_constraints(dragabbles))
 
     def test_grid_division_not_evenly(self):
-        raw_xml = '''
+        xml = """
         <customresponse>
             <drag_and_drop_input img="/static/images/grid_test/610x610_blank.png" target_outline="true" >
                 <draggable id="baby" icon="/static/images/grid_test/baby.png" can_reuse="true" />
@@ -209,9 +213,8 @@ class TestDragAndDropConstraints(unittest.TestCase):
             ]]>
             </answer>
         </customresponse>
-        '''
+        """
 
-        xml = etree.fromstring(raw_xml)
         user_input = json.dumps([
             {'baby': 'base_target{5}{8}'},
             {'baby': 'base_target{6}{10}'},
@@ -226,7 +229,7 @@ class TestDragAndDropConstraints(unittest.TestCase):
         self.assertEqual(dragabbles['baby'][3].x, 86.25)
 
     def test_constraints_nested_draggables(self):
-        raw_xml = '''
+        xml = """
         <customresponse>
             <text>
                 <h4>Babies and Sun</h4><br/>
@@ -262,9 +265,7 @@ class TestDragAndDropConstraints(unittest.TestCase):
         ]]>
             </answer>
         </customresponse>
-        '''
-
-        xml = etree.fromstring(raw_xml)
+        """
 
         correct_answer = [
             {
@@ -281,25 +282,27 @@ class TestDragAndDropConstraints(unittest.TestCase):
             }
         ]
 
-        constraints_raw = '''[
-            dragabbles['house'].count == 1,
-            dragabbles['sun'].count == 2 or dragabbles['baby'].count == 2
-        ]'''
-
-        # Correct
         user_input = json.dumps([
             {'house': 'base_target{5}{10}'},
             {'baby': {'1': {'house': 'base_target'}}},
             {'baby': {'2': {'house': 'base_target'}}},
             {'sun': {'3': {'house': 'base_target'}}}
         ])
-        dragabbles = get_all_dragabbles(user_input, xml)
 
-        self.assertTrue(all(eval(constraints_raw)))
+        def run_constraints(dragabbles):
+            """Execute constraints."""
+            constraints_raw = [
+                dragabbles['house'].count == 1,
+                dragabbles['sun'].count == 2 or dragabbles['baby'].count == 2
+            ]
+            return all(constraints_raw)
+
+        dragabbles = get_all_dragabbles(user_input, xml)
+        self.assertTrue(run_constraints(dragabbles))
         self.assertTrue(grade(user_input, correct_answer))
 
     def test_constraints_contains(self):
-        raw_xml = '''
+        xml = """
         <customresponse>
             <text>
                 <h4>Babies and Sun</h4><br/>
@@ -337,16 +340,17 @@ class TestDragAndDropConstraints(unittest.TestCase):
         ]]>
             </answer>
         </customresponse>
-        '''
+        """
 
-        xml = etree.fromstring(raw_xml)
-
-        constraints_raw = '''[
-            dragabbles['house'].count == 1,
-            dragabbles['sun'].count == 2 or dragabbles['baby'].count == 2,
-            dragabbles['house'].on('base_target')[0].contains('sun', 'sun') or
-            dragabbles['house'].on('base_target')[0].contains('baby', 'baby')
-        ]'''
+        def run_constraints(dragabbles):
+            """Execute constraints."""
+            constraints_raw = [
+                dragabbles['house'].count == 1,
+                dragabbles['sun'].count == 2 or dragabbles['baby'].count == 2,
+                dragabbles['house'].on('base_target')[0].contains('sun', 'sun') or
+                dragabbles['house'].on('base_target')[0].contains('baby', 'baby')
+            ]
+            return all(constraints_raw)
 
         # Correct
         user_input = json.dumps([
@@ -356,7 +360,7 @@ class TestDragAndDropConstraints(unittest.TestCase):
         ])
         dragabbles = get_all_dragabbles(user_input, xml)
 
-        self.assertTrue(all(eval(constraints_raw)))
+        self.assertTrue(run_constraints(dragabbles))
 
         # Correct
         user_input = json.dumps([
@@ -366,7 +370,7 @@ class TestDragAndDropConstraints(unittest.TestCase):
         ])
         dragabbles = get_all_dragabbles(user_input, xml)
 
-        self.assertTrue(all(eval(constraints_raw)))
+        self.assertTrue(run_constraints(dragabbles))
 
         # Correct
         user_input = json.dumps([
@@ -384,7 +388,7 @@ class TestDragAndDropConstraints(unittest.TestCase):
         ])
         dragabbles = get_all_dragabbles(user_input, xml)
 
-        self.assertTrue(all(eval(constraints_raw)))
+        self.assertTrue(run_constraints(dragabbles))
 
         # Fail
         user_input = json.dumps([
@@ -395,7 +399,7 @@ class TestDragAndDropConstraints(unittest.TestCase):
         ])
         dragabbles = get_all_dragabbles(user_input, xml)
 
-        self.assertFalse(all(eval(constraints_raw)))
+        self.assertFalse(run_constraints(dragabbles))
 
         # Fail
         user_input = json.dumps([
@@ -406,7 +410,7 @@ class TestDragAndDropConstraints(unittest.TestCase):
         ])
         dragabbles = get_all_dragabbles(user_input, xml)
 
-        self.assertFalse(all(eval(constraints_raw)))
+        self.assertFalse(run_constraints(dragabbles))
 
         # Fail
         user_input = json.dumps([
@@ -416,10 +420,10 @@ class TestDragAndDropConstraints(unittest.TestCase):
         ])
         dragabbles = get_all_dragabbles(user_input, xml)
 
-        self.assertFalse(all(eval(constraints_raw)))
+        self.assertFalse(run_constraints(dragabbles))
 
     def test_constraints_for_bad_draggables(self):
-        raw_xml = '''
+        xml = """
         <customresponse>
             <text>
                 <h4>Babies and Sun</h4><br/>
@@ -445,9 +449,7 @@ class TestDragAndDropConstraints(unittest.TestCase):
         ]]>
             </answer>
         </customresponse>
-        '''
-
-        xml = etree.fromstring(raw_xml)
+        """
 
         user_input = json.dumps([
             {'house': 'base_target{5}{10}'},
@@ -455,20 +457,20 @@ class TestDragAndDropConstraints(unittest.TestCase):
             {'baby': {'2': {'house': 'base_target'}}}
         ])
 
-        constraints_raw = '''[
+        dragabbles = get_all_dragabbles(user_input, xml)
+        constraints_raw = [
             dragabbles['BAD_sun'].count == 2
-        ]'''
-        dragabbles = get_all_dragabbles(user_input, xml)
-        self.assertFalse(all(eval(constraints_raw)))
+        ]
+        self.assertFalse(all(constraints_raw))
 
-        constraints_raw = '''[
-            dragabbles['house'].on('BAD_base_target')[0].contains('BAD_sun', 'BAD_sun')
-        ]'''
         dragabbles = get_all_dragabbles(user_input, xml)
-        self.assertFalse(all(eval(constraints_raw)))
+        constraints_raw = [
+            dragabbles['house'].on('BAD_base_target')[0].contains('BAD_sun', 'BAD_sun')
+        ]
+        self.assertFalse(all(constraints_raw))
 
     def test_constraints_contains_exact(self):
-        raw_xml = '''
+        xml = """
         <customresponse>
             <text>
                 <h4>Babies and Sun</h4><br/>
@@ -505,14 +507,16 @@ class TestDragAndDropConstraints(unittest.TestCase):
         ]]>
             </answer>
         </customresponse>
-        '''
+        """
 
-        xml = etree.fromstring(raw_xml)
-        constraints_raw = '''[
-            dragabbles['house'].count == 1,
-            dragabbles['house'].on('base_target')[0].contains('sun', 'sun', exact=False) or
-            dragabbles['house'].on('base_target')[0].contains('baby', 'baby')
-        ]'''
+        def run_constraints(dragabbles):
+            """Execute constraints."""
+            constraints_raw = [
+                dragabbles['house'].count == 1,
+                dragabbles['house'].on('base_target')[0].contains('sun', 'sun', exact=False) or
+                dragabbles['house'].on('base_target')[0].contains('baby', 'baby')
+            ]
+            return all(constraints_raw)
 
         # Correct
         user_input = json.dumps([
@@ -523,7 +527,7 @@ class TestDragAndDropConstraints(unittest.TestCase):
         ])
         dragabbles = get_all_dragabbles(user_input, xml)
 
-        self.assertTrue(all(eval(constraints_raw)))
+        self.assertTrue(run_constraints(dragabbles))
 
         # Correct
         user_input = json.dumps([
@@ -534,7 +538,7 @@ class TestDragAndDropConstraints(unittest.TestCase):
         ])
         dragabbles = get_all_dragabbles(user_input, xml)
 
-        self.assertTrue(all(eval(constraints_raw)))
+        self.assertTrue(run_constraints(dragabbles))
 
         # Correct
         user_input = json.dumps([
@@ -544,7 +548,7 @@ class TestDragAndDropConstraints(unittest.TestCase):
         ])
         dragabbles = get_all_dragabbles(user_input, xml)
 
-        self.assertTrue(all(eval(constraints_raw)))
+        self.assertTrue(run_constraints(dragabbles))
 
         # Fail
         user_input = json.dumps([
@@ -560,7 +564,7 @@ class TestDragAndDropConstraints(unittest.TestCase):
         ])
         dragabbles = get_all_dragabbles(user_input, xml)
 
-        self.assertFalse(all(eval(constraints_raw)))
+        self.assertFalse(run_constraints(dragabbles))
 
         # Fail
         user_input = json.dumps([
@@ -570,10 +574,10 @@ class TestDragAndDropConstraints(unittest.TestCase):
         ])
         dragabbles = get_all_dragabbles(user_input, xml)
 
-        self.assertFalse(all(eval(constraints_raw)))
+        self.assertFalse(run_constraints(dragabbles))
 
     def test_draggables_order(self):
-        raw_xml = '''
+        xml = """
         <customresponse>
             <drag_and_drop_input img="/static/images/grid_test/610x610_blank.png" target_outline="true" >
                 <draggable id="house" icon="/static/images/grid_test/house.png" can_reuse="true">
@@ -593,9 +597,8 @@ class TestDragAndDropConstraints(unittest.TestCase):
             ]]>
             </answer>
         </customresponse>
-        '''
+        """
 
-        xml = etree.fromstring(raw_xml)
         user_input = json.dumps([
             {'house': 'base_target{5}{10}'},
             {'house': 'base_target{6}{10}'},
@@ -634,14 +637,14 @@ class TestDragAndDropConstraints(unittest.TestCase):
         self.assertEqual(dragabbles['house'][6].x, 215)
 
 
-def suite():
-    testcases = [
-        TestDragAndDropConstraints
-    ]
-    suites = []
-    for testcase in testcases:
-        suites.append(unittest.TestLoader().loadTestsFromTestCase(testcase))
-    return unittest.TestSuite(suites)
-
-if __name__ == "__main__":
-    unittest.TextTestRunner(verbosity=2).run(suite())
+class TestDragAndDropConstraintsBadProperty(unittest.TestCase):
+    """Tests for `BadProperty` behavoiur."""
+    def test_bad_property(self):
+        first_obj = BadProperty()
+        second_obj = BadProperty()
+        self.assertFalse(first_obj == second_obj)
+        self.assertFalse(first_obj != second_obj)
+        self.assertFalse(first_obj < second_obj)
+        self.assertFalse(first_obj > second_obj)
+        self.assertFalse(first_obj <= second_obj)
+        self.assertFalse(first_obj >= second_obj)

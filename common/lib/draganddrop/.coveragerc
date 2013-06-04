@@ -1,0 +1,15 @@
+# .coveragerc for common/lib/draganddrop
+[run]
+data_file = reports/common/lib/draganddrop/.coverage
+source = common/lib/draganddrop
+branch = true
+
+[report]
+ignore_errors = True
+
+[html]
+title = Draganddrop Python Test Coverage Report
+directory = reports/common/lib/draganddrop/cover
+
+[xml]
+output = reports/common/lib/draganddrop/coverage.xml

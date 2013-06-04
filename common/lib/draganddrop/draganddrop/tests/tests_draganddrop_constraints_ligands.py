@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
+"""Complex chemistry tests for ligands."""
 
 import unittest
 import json
-from lxml import etree
 
 from ..draganddrop_constraints import get_all_dragabbles
-from ..draganddrop_rules import grade
 
 
-class TestDragAndDropConstraints(unittest.TestCase):
+class TestDragAndDropConstraintsLigands(unittest.TestCase):
+    """Complex chemistry tests for ligands."""
     def test_ligands_general(self):
-        raw_xml = '''
+        xml = r"""
 <customresponse>
     <html>
         <table style="width:665px; margin-left: auto; margin-right: auto;">
@@ -176,79 +176,75 @@ else:
     correct = ['incorrect']
 ]]></answer>
 </customresponse>
-        '''
+"""
 
-        user_answer = json.dumps(
-           [{"4p":"left-side{0}{6}"},{"4s":"left-side{0}{8}"},{"3d":"left-side{0}{10}"},{"e_g_*_2":"center-left{0}{8}"},{"d_xz":"center-left{0}{10}"},{"sigma_p_*":"center-center{0}{3}"},{"sigma_s_*":"center-center{0}{5}"},{"e_g_*_label":"center-center{0}{7}"},{"d_yz":"center-center{0}{10}"},{"t2g_label":"center-center{0}{12}"},{"sigma_d":"center-center{0}{14}"},{"sigma_p":"center-center{0}{16}"},{"sigma_s":"center-center{0}{18}"},{"e_g_*_1":"center-right{0}{8}"},{"d_xy":"center-right{0}{10}"},{"ligands":"right-side{0}{13}"}]
-            )
+        user_answer = json.dumps([
+            {"4p": "left-side{0}{6}"},
+            {"4s": "left-side{0}{8}"},
+            {"3d": "left-side{0}{10}"},
+            {"e_g_*_2": "center-left{0}{8}"},
+            {"d_xz": "center-left{0}{10}"},
+            {"sigma_p_*": "center-center{0}{3}"},
+            {"sigma_s_*": "center-center{0}{5}"},
+            {"e_g_*_label": "center-center{0}{7}"},
+            {"d_yz": "center-center{0}{10}"},
+            {"t2g_label": "center-center{0}{12}"},
+            {"sigma_d": "center-center{0}{14}"},
+            {"sigma_p": "center-center{0}{16}"},
+            {"sigma_s": "center-center{0}{18}"},
+            {"e_g_*_1": "center-right{0}{8}"},
+            {"d_xy": "center-right{0}{10}"},
+            {"ligands": "right-side{0}{13}"}
+        ])
 
-        xml = etree.fromstring(raw_xml)
         orbitals = get_all_dragabbles(user_answer, xml)
 
         constraints = [
-        # left side
-        orbitals['3d'].on('left-side').count == orbitals['3d'].count == 1,  # 0 - rule ordinal number
-        orbitals['4p'].on('left-side').count == orbitals['4p'].count == 1,  # 1
-        orbitals['4s'].on('left-side').count == orbitals['4s'].count == 1,  # 2
+            # left side
+            orbitals['3d'].on('left-side').count == orbitals['3d'].count == 1,  # 0 - rule ordinal number
+            orbitals['4p'].on('left-side').count == orbitals['4p'].count == 1,  # 1
+            orbitals['4s'].on('left-side').count == orbitals['4s'].count == 1,  # 2
 
-        #right side
-        orbitals['ligands'].on('right-side').count == orbitals['ligands'].count == 1,  # 3
+            #right side
+            orbitals['ligands'].on('right-side').count == orbitals['ligands'].count == 1,  # 3
 
-        # center side
-        orbitals['sigma_s'].on('center-left').count + orbitals['sigma_s'].on('center-center').count + orbitals['sigma_s'].on('center-right').count == orbitals['sigma_s'].count == 1,
+            # center side
+            orbitals['sigma_s'].on('center-left').count + orbitals['sigma_s'].on('center-center').count + orbitals['sigma_s'].on('center-right').count == orbitals['sigma_s'].count == 1,
 
-        orbitals['sigma_p'].on('center-left').count + orbitals['sigma_p'].on('center-center').count + orbitals['sigma_p'].on('center-right').count == orbitals['sigma_p'].count == 1,
+            orbitals['sigma_p'].on('center-left').count + orbitals['sigma_p'].on('center-center').count + orbitals['sigma_p'].on('center-right').count == orbitals['sigma_p'].count == 1,
 
-        orbitals['sigma_d'].on('center-left').count + orbitals['sigma_d'].on('center-center').count + orbitals['sigma_d'].on('center-right').count == orbitals['sigma_d'].count == 1,
+            orbitals['sigma_d'].on('center-left').count + orbitals['sigma_d'].on('center-center').count + orbitals['sigma_d'].on('center-right').count == orbitals['sigma_d'].count == 1,
 
-        orbitals['d_xy'].on('center-left').count + orbitals['d_xy'].on('center-center').count + orbitals['d_xy'].on('center-right').count == orbitals['d_xy'].count == 1,
+            orbitals['d_xy'].on('center-left').count + orbitals['d_xy'].on('center-center').count + orbitals['d_xy'].on('center-right').count == orbitals['d_xy'].count == 1,
 
-        orbitals['d_yz'].on('center-left').count + orbitals['d_yz'].on('center-center').count + orbitals['d_yz'].on('center-right').count == orbitals['d_yz'].count == 1,
+            orbitals['d_yz'].on('center-left').count + orbitals['d_yz'].on('center-center').count + orbitals['d_yz'].on('center-right').count == orbitals['d_yz'].count == 1,
 
-        orbitals['d_xz'].on('center-left').count + orbitals['d_xz'].on('center-center').count + orbitals['d_xz'].on('center-right').count == orbitals['d_xz'].count == 1,
+            orbitals['d_xz'].on('center-left').count + orbitals['d_xz'].on('center-center').count + orbitals['d_xz'].on('center-right').count == orbitals['d_xz'].count == 1,
 
-        orbitals['t2g_label'].on('center-left').count + orbitals['t2g_label'].on('center-center').count + orbitals['t2g_label'].on('center-right').count == orbitals['t2g_label'].count == 1,
+            orbitals['t2g_label'].on('center-left').count + orbitals['t2g_label'].on('center-center').count + orbitals['t2g_label'].on('center-right').count == orbitals['t2g_label'].count == 1,
 
-        orbitals['e_g_*_label'].on('center-left').count + orbitals['e_g_*_label'].on('center-center').count + orbitals['e_g_*_label'].on('center-right').count == orbitals['e_g_*_label'].count == 1,
+            orbitals['e_g_*_label'].on('center-left').count + orbitals['e_g_*_label'].on('center-center').count + orbitals['e_g_*_label'].on('center-right').count == orbitals['e_g_*_label'].count == 1,
 
-        orbitals['e_g_*_1'].on('center-left').count + orbitals['e_g_*_1'].on('center-center').count + orbitals['e_g_*_1'].on('center-right').count == orbitals['e_g_*_1'].count == 1,
+            orbitals['e_g_*_1'].on('center-left').count + orbitals['e_g_*_1'].on('center-center').count + orbitals['e_g_*_1'].on('center-right').count == orbitals['e_g_*_1'].count == 1,
 
-        orbitals['e_g_*_2'].on('center-left').count + orbitals['e_g_*_2'].on('center-center').count + orbitals['e_g_*_2'].on('center-right').count == orbitals['e_g_*_2'].count == 1,
+            orbitals['e_g_*_2'].on('center-left').count + orbitals['e_g_*_2'].on('center-center').count + orbitals['e_g_*_2'].on('center-right').count == orbitals['e_g_*_2'].count == 1,
 
-        # y axis growths down
-        orbitals['3d'][0].y         < orbitals['sigma_d'][0].y,  # 11
-        orbitals['sigma_d'][0].y    < orbitals['sigma_p'][0].y,
-        orbitals['sigma_p'][0].y    < orbitals['sigma_s'][0].y,
-        orbitals['3d'][0].y         < orbitals['ligands'][0].y,  # 14
-        orbitals['ligands'][0].y    < orbitals['sigma_d'][0].y,
-        orbitals['3d'][0].y         < orbitals['t2g_label'][0].y,  # 18
-        orbitals['t2g_label'][0].y  < orbitals['ligands'][0].y,
-        orbitals['4s'][0].y         < orbitals['3d'][0].y,  # 23
-        orbitals['4p'][0].y         < orbitals['4s'][0].y,  # 24
-        orbitals['sigma_s_*'][0].y  < orbitals['4p'][0].y,
-        orbitals['sigma_p_*'][0].y  < orbitals['sigma_s_*'][0].y,
-        orbitals['e_g_*_label'][0].y < orbitals['e_g_*_1'][0].y,
-        orbitals['e_g_*_label'][0].y > orbitals['4p'][0].y,
+            # y axis growths down
+            orbitals['3d'][0].y < orbitals['sigma_d'][0].y,  # 11
+            orbitals['sigma_d'][0].y < orbitals['sigma_p'][0].y,
+            orbitals['sigma_p'][0].y < orbitals['sigma_s'][0].y,
+            orbitals['3d'][0].y < orbitals['ligands'][0].y,  # 14
+            orbitals['ligands'][0].y < orbitals['sigma_d'][0].y,
+            orbitals['3d'][0].y < orbitals['t2g_label'][0].y,  # 18
+            orbitals['t2g_label'][0].y < orbitals['ligands'][0].y,
+            orbitals['4s'][0].y < orbitals['3d'][0].y,  # 23
+            orbitals['4p'][0].y < orbitals['4s'][0].y,  # 24
+            orbitals['sigma_s_*'][0].y < orbitals['4p'][0].y,
+            orbitals['sigma_p_*'][0].y < orbitals['sigma_s_*'][0].y,
+            orbitals['e_g_*_label'][0].y < orbitals['e_g_*_1'][0].y,
+            orbitals['e_g_*_label'][0].y > orbitals['4p'][0].y,
 
-        orbitals['e_g_*_1'][0].y == orbitals['e_g_*_2'][0].y == orbitals['4s'][0].y,
-        orbitals['d_yz'][0].y == orbitals['d_xy'][0].y == orbitals['d_yz'][0].y == orbitals['3d'][0].y,
+            orbitals['e_g_*_1'][0].y == orbitals['e_g_*_2'][0].y == orbitals['4s'][0].y,
+            orbitals['d_yz'][0].y == orbitals['d_xy'][0].y == orbitals['d_yz'][0].y == orbitals['3d'][0].y,
         ]
-        # import ipdb; ipdb.set_trace()
-        for i, j in enumerate(constraints):
-            if not j:
-                print i
-                # import ipdb; ipdb.set_trace()
         self.assertEqual(all(constraints), True)
-
-
-def suite():
-    testcases = [
-        TestDragAndDropConstraints
-    ]
-    suites = []
-    for testcase in testcases:
-        suites.append(unittest.TestLoader().loadTestsFromTestCase(testcase))
-    return unittest.TestSuite(suites)
-
-if __name__ == "__main__":
-    unittest.TextTestRunner(verbosity=2).run(suite())

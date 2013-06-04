@@ -15,25 +15,22 @@ This is used by capa_module.
 
 from datetime import datetime
 import logging
-import math
-import numpy
 import os.path
 import re
-import sys
 
 from lxml import etree
 from xml.sax.saxutils import unescape
 from copy import deepcopy
 
 from .correctmap import CorrectMap
-import inputtypes
-import customrender
+from . import inputtypes
+from . import customrender
+from . import xqueue_interface
 from .util import contextualize_text, convert_files_to_filenames
-import xqueue_interface
 
 # to be replaced with auto-registering
-import responsetypes
-import safe_exec
+from . import responsetypes
+from . import safe_exec
 
 # dict of tagname, Response Class -- this should come from auto-registering
 response_tag_dict = dict([(x.response_tag, x) for x in responsetypes.__all__])

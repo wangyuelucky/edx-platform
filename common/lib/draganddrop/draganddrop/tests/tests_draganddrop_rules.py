@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Tests for DnD rules."""
 
 import unittest
 import json
@@ -7,6 +8,29 @@ from ..draganddrop_rules import grade, DragAndDrop
 
 
 class TestDragAndDropRules(unittest.TestCase):
+    """Tests for DnD rules."""
+    def test_targets_are_draggable_bad_rules(self):
+        user_input = json.dumps([
+            {'p': 'p_l'},
+            {'up': {'first': {'p': 'p_l'}}}
+        ])
+
+        correct_answer = [
+            {
+                'draggables': ['p'],
+                'targets': ['p_l', 'p_r'],
+                'rule': 'some_bad_rules'
+            },
+            {
+                'draggables': ['up'],
+                'targets': [
+                    'p_l[p][first]'
+                ],
+                'rule': 'anyof'
+            }
+        ]
+        self.assertFalse(grade(user_input, correct_answer))
+
     def test_targets_are_draggable_1(self):
         user_input = json.dumps([
             {'p': 'p_l'},
@@ -764,6 +788,7 @@ class TestDragAndDropRules(unittest.TestCase):
 
 
 class TestDragAndDropPopulate(unittest.TestCase):
+    """Tests for `DragAndDrop` class."""
     def test_population(self):
         correct_answer = {'1': [[40, 10], 29], 'name_with_icon': [20, 20]}
         user_input = '[{"1": [10, 10]}, {"name_with_icon": [20, 20]}]'
@@ -781,47 +806,64 @@ class TestDragAndDropPopulate(unittest.TestCase):
 
 
 class TestDraAndDropComparePositions(unittest.TestCase):
-    def test_1(self):
-        dnd = DragAndDrop({'1': 't1'}, '[{"1": "t1"}]')
-        self.assertTrue(dnd.compare_positions(correct=[[1, 1], [2, 3]],
-                                              user=[[2, 3], [1, 1]],
-                                              flag='anyof'))
-
-    def test_2a(self):
+    """Tests for `compare_positions` method."""
+    def test_exact_1(self):
         dnd = DragAndDrop({'1': 't1'}, '[{"1": "t1"}]')
         self.assertTrue(
             dnd.compare_positions(
                 correct=[[1, 1], [2, 3]],
                 user=[[2, 3], [1, 1]],
-                flag='exact'
-            )
-        )
+                flag='exact'))
 
-    def test_2b(self):
+    def test_exact_2(self):
         dnd = DragAndDrop({'1': 't1'}, '[{"1": "t1"}]')
-        self.assertFalse(dnd.compare_positions(correct=[[1, 1], [2, 3]],
-                                               user=[[2, 13], [1, 1]],
-                                               flag='exact'))
+        self.assertFalse(
+            dnd.compare_positions(
+                correct=[[1, 1], [2, 3]],
+                user=[[2, 13], [1, 1]],
+                flag='exact'))
 
-    def test_3(self):
+    def test_exact_3(self):
         dnd = DragAndDrop({'1': 't1'}, '[{"1": "t1"}]')
-        self.assertFalse(dnd.compare_positions(correct=["a", "b"],
-                                               user=["a", "b", "c"],
-                                               flag='anyof'))
+        self.assertFalse(
+            dnd.compare_positions(
+                correct=["a", "b", "c"],
+                user=["a", "c", "b"],
+                flag='exact'))
 
-    def test_4(self):
+    def test_exact_4(self):
         dnd = DragAndDrop({'1': 't1'}, '[{"1": "t1"}]')
-        self.assertTrue(dnd.compare_positions(correct=["a", "b", "c"],
-                                              user=["a", "b"],
-                                              flag='anyof'))
+        self.assertFalse(
+            dnd.compare_positions(
+                correct=["a", "b", "c"],
+                user=["a", "b"],
+                flag='exact'))
 
-    def test_5(self):
+    def test_anyof_1(self):
         dnd = DragAndDrop({'1': 't1'}, '[{"1": "t1"}]')
-        self.assertFalse(dnd.compare_positions(correct=["a", "b", "c"],
-                                               user=["a", "c", "b"],
-                                               flag='exact'))
+        self.assertTrue(
+            dnd.compare_positions(
+                correct=[[1, 1], [2, 3]],
+                user=[[2, 3], [1, 1]],
+                flag='anyof'))
 
-    def test_6(self):
+    def test_anyof_2(self):
+        dnd = DragAndDrop({'1': 't1'}, '[{"1": "t1"}]')
+        self.assertFalse(
+            dnd.compare_positions(
+                correct=["a", "b"],
+                user=["a", "b", "c"],
+                flag='anyof'))
+
+    def test_anyof_3(self):
+        dnd = DragAndDrop({'1': 't1'}, '[{"1": "t1"}]')
+        self.assertTrue(
+            dnd.compare_positions(
+                correct=["a", "b", "c"],
+                user=["a", "b"],
+                flag='anyof'))
+
+    def test_anyof_4(self):
         dnd = DragAndDrop({'1': 't1'}, '[{"1": "t1"}]')
         self.assertTrue(
             dnd.compare_positions(
@@ -831,23 +873,18 @@ class TestDraAndDropComparePositions(unittest.TestCase):
             )
         )
 
-    def test_7(self):
+    def test_anyof_5(self):
         dnd = DragAndDrop({'1': 't1'}, '[{"1": "t1"}]')
-        self.assertFalse(dnd.compare_positions(correct=["a", "b", "b"],
-                                               user=["a", "c", "b"],
-                                               flag='anyof'))
+        self.assertFalse(
+            dnd.compare_positions(
+                correct=["a", "b", "b"],
+                user=["a", "c", "b"],
+                flag='anyof'))
 
-
-def suite():
-    testcases = [
-        TestDragAndDropPopulate,
-        TestDragAndDropRules,
-        TestDraAndDropComparePositions
-    ]
-    suites = []
-    for testcase in testcases:
-        suites.append(unittest.TestLoader().loadTestsFromTestCase(testcase))
-    return unittest.TestSuite(suites)
-
-if __name__ == "__main__":
-    unittest.TextTestRunner(verbosity=2).run(suite())
+    def test_unordered_equal_1(self):
+        dnd = DragAndDrop({'1': 't1'}, '[{"1": "t1"}]')
+        self.assertFalse(
+            dnd.compare_positions(
+                correct=["a", "b", "c"],
+                user=["a", "b"],
+                flag='unordered_equal'))

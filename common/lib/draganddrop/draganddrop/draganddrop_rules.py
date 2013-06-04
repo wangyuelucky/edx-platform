@@ -29,9 +29,6 @@ Please, use new style, which describe in `draganddrop_constraints` module.
 
 import json
 
-# `get_all_dragabbles` is used inside capaproblem (in XML)
-from .draganddrop_constraints import get_all_dragabbles
-
 from .draganddrop_helpers import clean_user_answer, flatten_user_answer
 from .draganddrop_helpers import PositionsCompare
 

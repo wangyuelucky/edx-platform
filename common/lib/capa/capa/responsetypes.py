@@ -928,7 +928,8 @@ class CustomResponse(LoncapaResponse):
     allowed_inputfields = ['textline', 'textbox', 'crystallography',
                            'chemicalequationinput', 'vsepr_input',
                            'editamoleculeinput', 'designprotein2dinput',
-                           'editageneinput', 'annotationinput']
+                           'editageneinput', 'annotationinput',
+                           'drag_and_drop_input']
 
     def setup_response(self):
         xml = self.xml
@@ -1065,6 +1066,12 @@ class CustomResponse(LoncapaResponse):
             'options': self.xml.get('options'),
             'testdat': 'hello world',
         })
+
+        # If <customeresponse> has one or more <drag_and_drop_input> tags
+        # we must put `xml` object to the context. This `xml` object
+        # we use in grading "Drag and Drop" problems.
+        if 'drag_and_drop_input' in [i.tag for i in self.inputfields]:
+            self.context['xml'] = etree.tostring(self.xml)
 
         # pass self.system.debug to cfn
         self.context['debug'] = self.system.DEBUG
@@ -2070,17 +2077,6 @@ class AnnotationResponse(LoncapaResponse):
         return None
 
 
-class DragAndDropResponse(CustomResponse):
-    """CustomResponse for drag_and_drop_input."""
-
-    allowed_inputfields = ['drag_and_drop_input']
-
-    def get_score(self, student_answers):
-        self.context.update(
-            {'xml': etree.tostring(self.xml)}
-        )
-        return super(DragAndDropResponse, self).get_score(student_answers)
-
 #-----------------------------------------------------------------------------
 
 # TEMPORARY: List of all response subclasses
@@ -2100,5 +2096,4 @@ __all__ = [CodeResponse,
            MultipleChoiceResponse,
            TrueFalseResponse,
            JavascriptResponse,
-           AnnotationResponse,
-           DragAndDropResponse]
+           AnnotationResponse]

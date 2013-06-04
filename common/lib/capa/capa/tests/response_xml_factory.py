@@ -779,3 +779,44 @@ class SymbolicResponseXMLFactory(ResponseXMLFactory):
 
     def create_input_element(self, **kwargs):
         return ResponseXMLFactory.textline_input_xml(**kwargs)
+
+
+class DraganddropResponseXmlFactory(CustomResponseXMLFactory):
+    """ Factory for producing <customresponse> XML trees
+    with draganddrop input"""
+
+    def create_input_element(self, **kwargs):
+        """ Create the <draganddrop_input> element.
+        Uses **kwargs.
+
+        :param one_per_target: "one_per_target" attribute for
+        <drag_and_drop_input> tag.
+        :type one_per_target: bool.
+        """
+
+        # Get the **kwargs
+        one_per_target = kwargs.get("one_per_target", True)
+
+        # Create the <draganddropinput> element
+        input_element = etree.Element("drag_and_drop_input")
+        input_element.set("one_per_target", str(one_per_target))
+        input_element.set("img", "/static/image.jpg")
+
+        number_of_draggables = 3
+        for i in range(number_of_draggables):
+            draggable_element = etree.Element("draggable")
+            draggable_element.set("id", "d_" + str(i))
+            draggable_element.set("label", "label_" + str(i))
+            input_element.append(draggable_element)
+
+        number_of_targets = 2 * number_of_draggables
+        for i in range(number_of_targets):
+            target_element = etree.Element("target")
+            target_element.set("id", "t_" + str(i))
+            target_element.set("x",  str(i * 40))
+            target_element.set("y",  str(i))
+            target_element.set("w",  str(32))
+            target_element.set("h",  str(32))
+            input_element.append(target_element)
+
+        return input_element

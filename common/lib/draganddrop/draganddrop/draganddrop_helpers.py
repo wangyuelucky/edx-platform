@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=C0103
+"""Drag and Drop rules for grading DnD problems.
+Please, for new problems use new type of rules – DnD constraints."""
 
 import re
 
@@ -22,6 +25,13 @@ def flatten_user_answer(user_answer):
     """
 
     def parse_user_answer(info):
+        """Convert item of `user_answer` to flat format.
+
+        Convert item like:
+        {'up': {'first': {'p': 'p_l'}}}
+        to
+        {'up': 'p_l[p][first]'}
+        """
         draggable, target = info.items()[0]
 
         if isinstance(target, dict):
@@ -61,6 +71,13 @@ def clean_user_answer(user_answer):
     """
 
     def parse_user_answer(answer):
+        """Convert item of `user_answer` to clean format.
+
+        Convert each item like:
+        {'up': 'p_l[p][first{3}{5}]'}
+        to
+        {'up': 'p_l[p][first]'}
+        """
         draggable, target = answer.items()[0]
 
         # Possible `target` type: `basestring` or

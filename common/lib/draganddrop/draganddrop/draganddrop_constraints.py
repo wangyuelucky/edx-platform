@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=C0103
+"""Drag and Drop constraints for advanced grading DnD problems."""
 
 import json
 from collections import Counter
@@ -68,22 +70,22 @@ class BadProperty(object):
     Any operations (==, !=, <, >, <=, >=) with this object
     return False.
     """
-    def __eq__(self, other):
+    def __eq__(self, _):
         return False
 
-    def __ne__(self, other):
+    def __ne__(self, _):
         return False
 
-    def __lt__(self, other):
+    def __lt__(self, _):
         return False
 
-    def __gt__(self, other):
+    def __gt__(self, _):
         return False
 
-    def __le__(self, other):
+    def __le__(self, _):
         return False
 
-    def __ge__(self, other):
+    def __ge__(self, _):
         return False
 
     def __nonzero__(self):
