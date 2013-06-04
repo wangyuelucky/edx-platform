@@ -39,8 +39,8 @@ from xmodule.modulestore.django import modulestore
 import xmodule.graders as xmgraders
 import track.views
 
-from .offline_gradecalc import student_grades, offline_grades_available
-from .instructordashviz import InstructorDashViz
+from instructor.offline_gradecalc import student_grades, offline_grades_available
+from instructor.instructordashviz import InstructorDashViz
 
 log = logging.getLogger(__name__)
 
