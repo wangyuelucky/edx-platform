@@ -30,7 +30,7 @@ def coffee_cmd(watch=false, debug=false)
         # Rather than watching all of the directories in one command
         # watch each static files subdirectory separately
         cmds = []
-        Dir['*/static'].each do |coffee_folder|
+        ['lms/static/coffee', 'cms/static/coffee', 'common/static/coffee', 'common/static/xmodule'].each do |coffee_folder|
             cmds << "node_modules/.bin/coffee --watch --compile #{coffee_folder}"
         end
         cmds
