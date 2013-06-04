@@ -1,14 +1,5 @@
-<section id="inputtype_${id}" class="jsinput">
+<section id="inputtype_${id}" data="${gradefn}" class="jsinput">
 
-    <%text>
-  <script type="text/javascript">
-     var fn = window.frames[0].jQuery{gradefn} ;
-     var thisinput = document.getElementById("inputtype_${id}");
-     var problem = jQuery(thisinput).closest("section.problem");
-     var checkbutton = jQuery(thisinput).find("section.action").first().;
-     checkbutton.onMouseOver(fn());
-  </script>
-    </%text>
      
   % if status == 'unsubmitted':
   <div class="unanswered" id="status_${id}">
@@ -29,6 +20,8 @@
       />
   <input type="hidden" name="input_${id}" id="input_${id}" value="${value|h}"/>
 
+  <br/>
+    <button id="update_${id}" class="update">Update</button>
     <p id="answer_${id}" class="answer"></p>
 
     <p class="status">

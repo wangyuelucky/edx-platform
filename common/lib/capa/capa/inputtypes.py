@@ -477,15 +477,10 @@ class JSInput(InputTypeBase):
                  height="500" 
                  width="400"/>
 
-      The goal is to have two distinct ways of writing a jsinput problem. In the
-    first, one specifies the attribute gradefn, which is a function *in
-    html_file*, and which should return the value to grade. This function is
-    called after the "Check" button is pressed, but before the value in the
-    hidden input tag is sent for grading. 
-      In the second form, the html_file is responsible for calling the function
-    "edx_update" every time the value to be sent for grading changes.
-    edx_update then updates the hidden input field.
-
+     Rather than spending resources unnecessarily updating the input field, or
+    binding synchronously to the "Check" button and risking breaking
+    submissions, this inputtype adds its own "Update" button that the student
+    must click on before submitting her answer.
     """
 
     template = "jsinput.html"
@@ -502,6 +497,8 @@ class JSInput(InputTypeBase):
                 Attribute('width', "400"),       # iframe width
                 Attribute('height', "300")]      # iframe height
 
+
+        return context
         
 
 registry.register(JSInput)
