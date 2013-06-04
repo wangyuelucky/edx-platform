@@ -1,47 +1,25 @@
 """
 Instructor Views
 """
-from collections import defaultdict
+
 import csv
 import json
 import logging
 import os
 import re
 import requests
-from requests.status_codes import codes
-import urllib
-from collections import OrderedDict
-
-from StringIO import StringIO
-
-from django.conf import settings
-from django.contrib.auth.models import User, Group
-from django.http import HttpResponse
 from django_future.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_control
 from mitxmako.shortcuts import render_to_response
 from django.core.urlresolvers import reverse
 
-from courseware import grades
-from courseware.access import (has_access, get_access_group_name,
-                               course_beta_test_group_name)
+from django.conf import settings
+from courseware.access import has_access, get_access_group_name, course_beta_test_group_name
 from courseware.courses import get_course_with_access
-from courseware.models import StudentModule
-from django_comment_common.models import (Role,
-                                          FORUM_ROLE_ADMINISTRATOR,
-                                          FORUM_ROLE_MODERATOR,
-                                          FORUM_ROLE_COMMUNITY_TA)
 from django_comment_client.utils import has_forum_access
-from psychometrics import psychoanalyze
-from student.models import CourseEnrollment, CourseEnrollmentAllowed
-from xmodule.modulestore.django import modulestore
-import xmodule.graders as xmgraders
-import track.views
-
 from instructor.offline_gradecalc import student_grades, offline_grades_available
-from instructor.instructordashviz import InstructorDashViz
-
-log = logging.getLogger(__name__)
+from django_comment_common.models import Role, FORUM_ROLE_ADMINISTRATOR, FORUM_ROLE_MODERATOR, FORUM_ROLE_COMMUNITY_TA
+from xmodule.modulestore.django import modulestore
 
 
 @ensure_csrf_cookie
