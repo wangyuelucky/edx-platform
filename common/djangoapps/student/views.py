@@ -578,7 +578,7 @@ def create_account(request, post_override=None):
     if DoExternalAuth:
         eamap = request.session['ExternalAuthMap']
         email = eamap.external_email
-        if eamap.external_name.strip() == '' or True:
+        if eamap.external_name.strip() == '':
             name = post_vars.get('name', '')
         else:
             name = eamap.external_name 
