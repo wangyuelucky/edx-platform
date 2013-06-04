@@ -54,6 +54,7 @@ class TaskQueueTestCase(TestCase):
                                                                             problem_url_name=problem_url_name)
 
     def _create_entry(self, task_state="QUEUED", task_output=None, student=None):
+        """Creates a CourseTaskLog entry for testing."""
         task_id = str(uuid4())
         progress_json = json.dumps(task_output)
         task_input, task_key = _encode_problem_and_student_input(self.problem_url, student)
@@ -67,6 +68,7 @@ class TaskQueueTestCase(TestCase):
         return course_task_log
 
     def _create_failure_entry(self):
+        """Creates a CourseTaskLog entry representing a failed task."""
         # view task entry for task failure
         progress = {'message': TEST_FAILURE_MESSAGE,
                     'exception': 'RandomCauseError',
@@ -74,9 +76,11 @@ class TaskQueueTestCase(TestCase):
         return self._create_entry(task_state="FAILURE", task_output=progress)
 
     def _create_success_entry(self, student=None):
-        return self._create_progress_entry(student=None, task_state="SUCCESS")
+        """Creates a CourseTaskLog entry representing a successful task."""
+        return self._create_progress_entry(student, task_state="SUCCESS")
 
     def _create_progress_entry(self, student=None, task_state="PROGRESS"):
+        """Creates a CourseTaskLog entry representing a task in progress."""
         # view task entry for task failure
         progress = {'attempted': 3,
                     'updated': 2,
@@ -200,6 +204,7 @@ class TaskQueueTestCase(TestCase):
         self.assertEquals(output['message'], "Task revoked before running")
 
     def _get_output_for_task_success(self, attempted, updated, total, student=None):
+        """returns the task_id and the result returned by course_task_log_status()."""
         # view task entry for task in progress
         course_task_log = self._create_progress_entry(student)
         task_id = course_task_log.task_id

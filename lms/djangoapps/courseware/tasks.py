@@ -21,7 +21,7 @@ from courseware.module_render import get_module_for_descriptor_internal
 
 
 # define different loggers for use within tasks and on client side
-task_log = get_task_logger(__name__)
+TASK_LOG = get_task_logger(__name__)
 
 
 class UpdateProblemModuleStateError(Exception):
@@ -66,7 +66,7 @@ def _update_problem_module_state_internal(course_id, module_state_key, student_i
     #  So we look for the result: the defining of the lookup paths
     # for templates.
     if 'main' not in middleware.lookup:
-        task_log.info("Initializing Mako middleware explicitly")
+        TASK_LOG.info("Initializing Mako middleware explicitly")
         middleware.MakoMiddleware()
 
     # find the problem descriptor:
@@ -150,7 +150,7 @@ def _update_problem_module_state(entry_id, course_id, module_state_key, student_
     """
     task_id = current_task.request.id
     fmt = 'Starting to update problem modules as task "{task_id}": course "{course_id}" problem "{state_key}": nothing {action} yet'
-    task_log.info(fmt.format(task_id=task_id, course_id=course_id, state_key=module_state_key, action=action_name))
+    TASK_LOG.info(fmt.format(task_id=task_id, course_id=course_id, state_key=module_state_key, action=action_name))
 
     # get the CourseTaskLog to be updated.  If this fails, then let the exception return to Celery.
     # There's no point in catching it here.
@@ -172,7 +172,7 @@ def _update_problem_module_state(entry_id, course_id, module_state_key, student_
         exception_type, exception, traceback = exc_info()
         traceback_string = format_exc(traceback) if traceback is not None else ''
         task_progress = {'exception': exception_type.__name__, 'message': str(exception.message)}
-        task_log.warning("background task (%s) failed: %s %s", task_id, exception, traceback_string)
+        TASK_LOG.warning("background task (%s) failed: %s %s", task_id, exception, traceback_string)
         if traceback is not None:
             task_progress['traceback'] = traceback_string
         entry.task_output = json.dumps(task_progress)
@@ -187,7 +187,7 @@ def _update_problem_module_state(entry_id, course_id, module_state_key, student_
 
     # log and exit, returning task_progress info as task result:
     fmt = 'Finishing task "{task_id}": course "{course_id}" problem "{state_key}": final: {progress}'
-    task_log.info(fmt.format(task_id=task_id, course_id=course_id, state_key=module_state_key, progress=task_progress))
+    TASK_LOG.info(fmt.format(task_id=task_id, course_id=course_id, state_key=module_state_key, progress=task_progress))
     return task_progress
 
 
@@ -212,10 +212,10 @@ def _update_problem_module_state_for_student(entry_id, course_id, problem_url, s
     return (success, msg)
 
 
-def _get_module_instance_for_task(course_id, student, module_descriptor, module_state_key, xmodule_instance_args=None,
+def _get_module_instance_for_task(course_id, student, module_descriptor, xmodule_instance_args=None,
                                   grade_bucket_type=None):
     """
-    Fetches a StudentModule instance for a given course_id, student, and module_state_key.
+    Fetches a StudentModule instance for a given course_id, student, and module_descriptor.
 
     Includes providing information for creating a track function and an XQueue callback,
     but does not require passing in a Request object.
@@ -233,9 +233,10 @@ def _get_module_instance_for_task(course_id, student, module_descriptor, module_
         Make a tracking function that logs what happened.
         For insertion into ModuleSystem, and use by CapaModule.
         '''
-        def f(event_type, event):
+        def track_function(event_type, event):
+            """Track function wrapper that uses closure's request_info and task_info args."""
             return task_track(request_info, task_info, event_type, event, page='x_module_task')
-        return f
+        return track_function
 
     xqueue_callback_url_prefix = ''
     if xmodule_instance_args is not None:
@@ -259,14 +260,14 @@ def _rescore_problem_module_state(module_descriptor, student_module, xmodule_ins
     student = student_module.student
     module_state_key = student_module.module_state_key
 
-    instance = _get_module_instance_for_task(course_id, student, module_descriptor, module_state_key, xmodule_instance_args, grade_bucket_type='rescore')
+    instance = _get_module_instance_for_task(course_id, student, module_descriptor, xmodule_instance_args, grade_bucket_type='rescore')
 
     if instance is None:
         # Either permissions just changed, or someone is trying to be clever
         # and load something they shouldn't have access to.
         msg = "No module {loc} for student {student}--access denied?".format(loc=module_state_key,
                                                                              student=student)
-        task_log.debug(msg)
+        TASK_LOG.debug(msg)
         raise UpdateProblemModuleStateError(msg)
 
     if not hasattr(instance, 'rescore_problem'):
@@ -278,20 +279,20 @@ def _rescore_problem_module_state(module_descriptor, student_module, xmodule_ins
     result = instance.rescore_problem()
     if 'success' not in result:
         # don't consider these fatal, but false means that the individual call didn't complete:
-        task_log.warning("error processing rescore call for problem {loc} and student {student}: "
-                 "unexpected response {msg}".format(msg=result, loc=module_state_key, student=student))
+        TASK_LOG.warning("error processing rescore call for problem {loc} and student {student}: "
+                         "unexpected response {msg}".format(msg=result, loc=module_state_key, student=student))
         return False
     elif result['success'] != 'correct' and result['success'] != 'incorrect':
-        task_log.warning("error processing rescore call for problem {loc} and student {student}: "
-                  "{msg}".format(msg=result['success'], loc=module_state_key, student=student))
+        TASK_LOG.warning("error processing rescore call for problem {loc} and student {student}: "
+                         "{msg}".format(msg=result['success'], loc=module_state_key, student=student))
         return False
     else:
-        task_log.debug("successfully processed rescore call for problem {loc} and student {student}: "
-                  "{msg}".format(msg=result['success'], loc=module_state_key, student=student))
+        TASK_LOG.debug("successfully processed rescore call for problem {loc} and student {student}: "
+                       "{msg}".format(msg=result['success'], loc=module_state_key, student=student))
         return True
 
 
-def filter_problem_module_state_for_done(modules_to_update):
+def _filter_module_state_for_done(modules_to_update):
     """Filter to apply for rescoring, to limit module instances to those marked as done"""
     return modules_to_update.filter(state__contains='"done": true')
 
@@ -301,7 +302,7 @@ def rescore_problem(entry_id, course_id, task_input, xmodule_instance_args):
     """Rescores problem `problem_url` in `course_id` for all students."""
     action_name = 'rescored'
     update_fcn = _rescore_problem_module_state
-    filter_fcn = filter_problem_module_state_for_done
+    filter_fcn = _filter_module_state_for_done
     problem_url = task_input.get('problem_url')
     student_ident = None
     if 'student' in task_input:
@@ -312,7 +313,7 @@ def rescore_problem(entry_id, course_id, task_input, xmodule_instance_args):
 
 
 @transaction.autocommit
-def _reset_problem_attempts_module_state(module_descriptor, student_module, xmodule_instance_args=None):
+def _reset_problem_attempts_module_state(_module_descriptor, student_module, xmodule_instance_args=None):
     """
     Resets problem attempts to zero for specified `student_module`.
 
@@ -353,7 +354,7 @@ def reset_problem_attempts(entry_id, course_id, task_input, xmodule_instance_arg
 
 
 @transaction.autocommit
-def _delete_problem_module_state(module_descriptor, student_module, xmodule_instance_args=None):
+def _delete_problem_module_state(_module_descriptor, student_module, xmodule_instance_args=None):
     """Delete the StudentModule entry."""
     student_module.delete()
     # get request-related tracking information from args passthrough,

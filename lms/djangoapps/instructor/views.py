@@ -29,7 +29,7 @@ from courseware import task_submit
 from courseware.access import (has_access, get_access_group_name,
                                course_beta_test_group_name)
 from courseware.courses import get_course_with_access
-from courseware.models import StudentModule, CourseTaskLog
+from courseware.models import StudentModule
 from django_comment_common.models import (Role,
                                           FORUM_ROLE_ADMINISTRATOR,
                                           FORUM_ROLE_MODERATOR,
@@ -99,6 +99,7 @@ def instructor_dashboard(request, course_id):
     datatable['data'] = data
 
     def return_csv(fn, datatable, fp=None):
+        """Outputs a CSV file from the contents of a datatable."""
         if fp is None:
             response = HttpResponse(mimetype='text/csv')
             response['Content-Disposition'] = 'attachment; filename={0}'.format(fn)
@@ -112,12 +113,15 @@ def instructor_dashboard(request, course_id):
         return response
 
     def get_staff_group(course):
+        """Get or create the staff access group"""
         return get_group(course, 'staff')
 
     def get_instructor_group(course):
+        """Get or create the instructor access group"""
         return get_group(course, 'instructor')
 
     def get_group(course, groupname):
+        """Get or create an access group"""
         grpname = get_access_group_name(course, groupname)
         try:
             group = Group.objects.get(name=grpname)
@@ -157,7 +161,7 @@ def instructor_dashboard(request, course_id):
         return "i4x://" + org + "/" + course_name + "/" + urlname
 
     def get_student_from_identifier(unique_student_identifier):
-        # try to uniquely id student by email address or username
+        """Gets a student object using either an email address or username"""
         msg = ""
         try:
             if "@" in unique_student_identifier:
@@ -1311,14 +1315,14 @@ def get_background_task_table(course_id, problem_url, student=None):
     else:
         datatable = {}
         datatable['header'] = ["Order",
-            "Task Type",
-            "Task Id",
-            "Requester",
-            "Submitted",
-            "Duration (ms)",
-            "Task State",
-            "Task Status",
-            "Task Output"]
+                               "Task Type",
+                               "Task Id",
+                               "Requester",
+                               "Submitted",
+                               "Duration (ms)",
+                               "Task State",
+                               "Task Status",
+                               "Task Output"]
 
         datatable['data'] = []
         for i, course_task in enumerate(history_entries):
@@ -1336,14 +1340,14 @@ def get_background_task_table(course_id, problem_url, student=None):
                 status = "Incomplete"
             # generate row for this task:
             row = ["#{0}".format(len(history_entries) - i),
-                str(course_task.task_type),
-                str(course_task.task_id),
-                str(course_task.requester),
-                course_task.created.strftime("%Y/%m/%d %H:%M:%S"),
-                duration_ms,
-                str(course_task.task_state),
-                status,
-                message]
+                   str(course_task.task_type),
+                   str(course_task.task_id),
+                   str(course_task.requester),
+                   course_task.created.strftime("%Y/%m/%d %H:%M:%S"),
+                   duration_ms,
+                   str(course_task.task_state),
+                   status,
+                   message]
             datatable['data'].append(row)
 
     return msg, datatable

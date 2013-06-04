@@ -21,10 +21,10 @@ from student.tests.factories import CourseEnrollmentFactory, UserFactory, AdminF
 
 from courseware.model_data import StudentModule
 from courseware.task_submit import (submit_rescore_problem_for_all_students,
-                                   submit_rescore_problem_for_student,
-                                   course_task_log_status,
-                                   submit_reset_problem_attempts_for_all_students,
-                                   submit_delete_problem_state_for_all_students)
+                                    submit_rescore_problem_for_student,
+                                    course_task_log_status,
+                                    submit_reset_problem_attempts_for_all_students,
+                                    submit_delete_problem_state_for_all_students)
 from courseware.tests.tests import LoginEnrollmentTestCase, TEST_DATA_MONGO_MODULESTORE
 
 
@@ -66,13 +66,16 @@ class TestRescoringBase(LoginEnrollmentTestCase, ModuleStoreTestCase):
 
     @staticmethod
     def get_user_email(username):
+        """Generate email address based on username"""
         return '{0}@test.com'.format(username)
 
     def login_username(self, username):
+        """Login the user, given the `username`."""
         self.login(TestRescoringBase.get_user_email(username), "test")
         self.current_user = username
 
     def _create_user(self, username, is_staff=False):
+        """Creates a user and enrolls them in the test course."""
         email = TestRescoringBase.get_user_email(username)
         if (is_staff):
             AdminFactory.create(username=username, email=email)
@@ -83,9 +86,11 @@ class TestRescoringBase(LoginEnrollmentTestCase, ModuleStoreTestCase):
         return thisuser
 
     def create_instructor(self, username):
+        """Creates an instructor for the test course."""
         return self._create_user(username, is_staff=True)
 
     def create_student(self, username):
+        """Creates a student for the test course."""
         return self._create_user(username, is_staff=False)
 
     @staticmethod
@@ -147,6 +152,7 @@ class TestRescoringBase(LoginEnrollmentTestCase, ModuleStoreTestCase):
         Assumes the input list of responses has two values.
         """
         def get_input_id(response_id):
+            """Creates input id using information about the test course and the current problem."""
             return 'input_i4x-{0}-{1}-problem-{2}_{3}'.format(TEST_COURSE_ORG.lower(),
                                                               TEST_COURSE_NUMBER.replace('.', '_'),
                                                               problem_url_name, response_id)
@@ -187,14 +193,8 @@ class TestRescoringBase(LoginEnrollmentTestCase, ModuleStoreTestCase):
                                                   TestRescoringBase.problem_location(problem_url_name),
                                                   student)
 
-    def show_correct_answer(self, problem_url_name):
-        modx_url = reverse('modx_dispatch',
-                           kwargs={'course_id': self.course.id,
-                                   'location': TestRescoringBase.problem_location(problem_url_name),
-                                   'dispatch': 'problem_show', })
-        return self.client.post(modx_url, {})
-
     def get_student_module(self, username, descriptor):
+        """Get StudentModule object for test course, given the `username` and the problem's `descriptor`."""
         return StudentModule.objects.get(course_id=self.course.id,
                                          student=User.objects.get(username=username),
                                          module_type=descriptor.location.category,
@@ -202,6 +202,13 @@ class TestRescoringBase(LoginEnrollmentTestCase, ModuleStoreTestCase):
                                          )
 
     def check_state(self, username, descriptor, expected_score, expected_max_score, expected_attempts):
+        """
+        Check that the StudentModule state contains the expected values.
+
+        The student module is found for the test course, given the `username` and problem `descriptor`.
+
+        Values checked include the number of attempts, the score, and the max score for a problem.
+        """
         module = self.get_student_module(username, descriptor)
         self.assertEqual(module.grade, expected_score, "Scores were not equal")
         self.assertEqual(module.max_grade, expected_max_score, "Max scores were not equal")
@@ -444,6 +451,7 @@ class TestResetAttempts(TestRescoringBase):
         self.logout()
 
     def get_num_attempts(self, username, descriptor):
+        """returns number of attempts stored for `username` on problem `descriptor` for test course"""
         module = self.get_student_module(username, descriptor)
         state = json.loads(module.state)
         return state['attempts']
