@@ -1333,7 +1333,7 @@ def get_background_task_table(course_id, problem_url, student=None):
                 if 'duration_ms' in task_output:
                     duration_ms = task_output['duration_ms']
             # get progress status message:
-            success, message = task_submit.get_task_completion_message(course_task)
+            success, message = task_submit.get_task_completion_info(course_task)
             if success:
                 status = "Complete"
             else:

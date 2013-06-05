@@ -311,14 +311,14 @@ def _get_course_task_log_status(task_id):
     status['in_progress'] = course_task_log_entry.task_state not in READY_STATES
 
     if course_task_log_entry.task_state in READY_STATES:
-        succeeded, message = get_task_completion_message(course_task_log_entry)
+        succeeded, message = get_task_completion_info(course_task_log_entry)
         status['message'] = message
         status['succeeded'] = succeeded
 
     return status
 
 
-def get_task_completion_message(course_task_log_entry):
+def get_task_completion_info(course_task_log_entry):
     """
     Construct progress message from progress information in CourseTaskLog entry.
 
@@ -408,10 +408,8 @@ def _encode_problem_and_student_input(problem_url, student=None):
         task_input = {'problem_url': problem_url}
         task_key_stub = "{student}_{problem}".format(student="", problem=problem_url)
 
-    # create the key value of known length by using MD5 hash:
-    hasher = hashlib.md5()
-    hasher.update(task_key_stub)
-    task_key = hasher.hexdigest()
+    # create the key value by using MD5 hash:
+    task_key = hashlib.md5(task_key_stub).hexdigest()
 
     return task_input, task_key
 

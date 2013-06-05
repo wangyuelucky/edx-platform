@@ -3,6 +3,8 @@ Test for LMS courseware background task queue management
 """
 import logging
 import json
+from celery.states import SUCCESS, FAILURE, REVOKED
+
 from mock import Mock, patch
 from uuid import uuid4
 
@@ -12,6 +14,7 @@ from django.test.testcases import TestCase
 from xmodule.modulestore.exceptions import ItemNotFoundError
 
 from courseware.tests.factories import UserFactory, CourseTaskLogFactory
+from courseware.tasks import PROGRESS
 from courseware.task_submit import (get_running_course_tasks,
                                     course_task_log_status,
                                     _encode_problem_and_student_input,
@@ -28,7 +31,7 @@ log = logging.getLogger("mitx." + __name__)
 TEST_FAILURE_MESSAGE = 'task failed horribly'
 
 
-class TaskQueueTestCase(TestCase):
+class TaskSubmitTestCase(TestCase):
     """
     Check that background tasks are properly queued and report status.
     """
@@ -39,17 +42,17 @@ class TaskQueueTestCase(TestCase):
     def setUp(self):
         self.student = UserFactory.create(username="student", email="student@edx.org")
         self.instructor = UserFactory.create(username="instructor", email="student@edx.org")
-        self.problem_url = TaskQueueTestCase.problem_location("test_urlname")
+        self.problem_url = TaskSubmitTestCase.problem_location("test_urlname")
 
     @staticmethod
     def problem_location(problem_url_name):
         """
         Create an internal location for a test problem.
         """
-        if "i4x:" in problem_url_name:
-            return problem_url_name
-        else:
-            return "i4x://{org}/{number}/problem/{problem_url_name}".format(org='edx',
+#        if "i4x:" in problem_url_name:
+#            return problem_url_name
+#        else:
+        return "i4x://{org}/{number}/problem/{problem_url_name}".format(org='edx',
                                                                             number='1.23x',
                                                                             problem_url_name=problem_url_name)
 
@@ -73,15 +76,14 @@ class TaskQueueTestCase(TestCase):
         progress = {'message': TEST_FAILURE_MESSAGE,
                     'exception': 'RandomCauseError',
                     }
-        return self._create_entry(task_state="FAILURE", task_output=progress)
+        return self._create_entry(task_state=FAILURE, task_output=progress)
 
     def _create_success_entry(self, student=None):
         """Creates a CourseTaskLog entry representing a successful task."""
-        return self._create_progress_entry(student, task_state="SUCCESS")
+        return self._create_progress_entry(student, task_state=SUCCESS)
 
-    def _create_progress_entry(self, student=None, task_state="PROGRESS"):
+    def _create_progress_entry(self, student=None, task_state=PROGRESS):
         """Creates a CourseTaskLog entry representing a task in progress."""
-        # view task entry for task failure
         progress = {'attempted': 3,
                     'updated': 2,
                     'total': 10,
@@ -136,7 +138,7 @@ class TaskQueueTestCase(TestCase):
         response = course_task_log_status(Mock(), task_id=task_id)
         output = json.loads(response.content)
         self.assertEquals(output['task_id'], task_id)
-        self.assertEquals(output['task_state'], "FAILURE")
+        self.assertEquals(output['task_state'], FAILURE)
         self.assertFalse(output['in_progress'])
         self.assertEquals(output['message'], TEST_FAILURE_MESSAGE)
 
@@ -146,7 +148,7 @@ class TaskQueueTestCase(TestCase):
         response = course_task_log_status(Mock(), task_id=task_id)
         output = json.loads(response.content)
         self.assertEquals(output['task_id'], task_id)
-        self.assertEquals(output['task_state'], "SUCCESS")
+        self.assertEquals(output['task_state'], SUCCESS)
         self.assertFalse(output['in_progress'])
 
     def test_update_progress_to_progress(self):
@@ -155,7 +157,7 @@ class TaskQueueTestCase(TestCase):
         task_id = course_task_log.task_id
         mock_result = Mock()
         mock_result.task_id = task_id
-        mock_result.state = "PROGRESS"
+        mock_result.state = PROGRESS
         mock_result.result = {'attempted': 5,
                               'updated': 4,
                               'total': 10,
@@ -165,7 +167,7 @@ class TaskQueueTestCase(TestCase):
             response = course_task_log_status(Mock(), task_id=task_id)
         output = json.loads(response.content)
         self.assertEquals(output['task_id'], task_id)
-        self.assertEquals(output['task_state'], "PROGRESS")
+        self.assertEquals(output['task_state'], PROGRESS)
         self.assertTrue(output['in_progress'])
         # self.assertEquals(output['message'], )
 
@@ -183,7 +185,7 @@ class TaskQueueTestCase(TestCase):
             response = course_task_log_status(Mock(), task_id=task_id)
         output = json.loads(response.content)
         self.assertEquals(output['task_id'], task_id)
-        self.assertEquals(output['task_state'], "FAILURE")
+        self.assertEquals(output['task_state'], FAILURE)
         self.assertFalse(output['in_progress'])
         self.assertEquals(output['message'], "This task later failed.")
 
@@ -193,13 +195,13 @@ class TaskQueueTestCase(TestCase):
         task_id = course_task_log.task_id
         mock_result = Mock()
         mock_result.task_id = task_id
-        mock_result.state = "REVOKED"
+        mock_result.state = REVOKED
         with patch('celery.result.AsyncResult.__new__') as mock_result_ctor:
             mock_result_ctor.return_value = mock_result
             response = course_task_log_status(Mock(), task_id=task_id)
         output = json.loads(response.content)
         self.assertEquals(output['task_id'], task_id)
-        self.assertEquals(output['task_state'], "REVOKED")
+        self.assertEquals(output['task_state'], REVOKED)
         self.assertFalse(output['in_progress'])
         self.assertEquals(output['message'], "Task revoked before running")
 
@@ -210,7 +212,7 @@ class TaskQueueTestCase(TestCase):
         task_id = course_task_log.task_id
         mock_result = Mock()
         mock_result.task_id = task_id
-        mock_result.state = "SUCCESS"
+        mock_result.state = SUCCESS
         mock_result.result = {'attempted': attempted,
                               'updated': updated,
                               'total': total,
@@ -224,7 +226,7 @@ class TaskQueueTestCase(TestCase):
     def test_update_progress_to_success(self):
         task_id, output = self._get_output_for_task_success(10, 8, 10)
         self.assertEquals(output['task_id'], task_id)
-        self.assertEquals(output['task_state'], "SUCCESS")
+        self.assertEquals(output['task_state'], SUCCESS)
         self.assertFalse(output['in_progress'])
 
     def test_success_messages(self):
