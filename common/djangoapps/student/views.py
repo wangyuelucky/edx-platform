@@ -360,8 +360,6 @@ def change_enrollment(request):
                         .format(user.username, course_id))
             return HttpResponseBadRequest("Course id is invalid")
 
-        log.warning("enroll action")
-
         if not has_access(user, course, 'enroll'):
             return HttpResponseBadRequest("Enrollment is closed")
 
