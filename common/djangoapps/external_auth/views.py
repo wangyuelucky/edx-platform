@@ -338,8 +338,8 @@ def shib_login(request, retfun=None):
         #Clean up first name, last name, and email address
         #TODO: Make this less hardcoded re: format, but split will work
         #even if ";" is not present since we are accessing 1st element
-        shib['sn'] = shib['sn'].split(";")[0] 
-        shib['givenName'] = shib['givenName'].split(";")[0]
+        shib['sn'] = shib['sn'].split(";")[0].strip().capitalize()
+        shib['givenName'] = shib['givenName'].split(";")[0].strip().capitalize()
         if not shib['mail']:
             shib['mail'] = shib['eppn']
 
