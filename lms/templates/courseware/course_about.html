@@ -34,7 +34,8 @@
       } else if (xhr.status == 403) {
         location.href = "${reverse('shib-login')}?course_id=${course.id}&enrollment_action=enroll";
       } else if (xhr.status == 400) { //This means the user did not have permission
-        $('#register_error').html( 'This course has restricted enrollment.  Sorry, you do not have permission to enroll.'
+        $('#register_error').html('This course has restricted enrollment.  Sorry, you do not have permission to enroll.<br />' +
+                                  'You may need to log out and re-login with a university account, such as Shibboleth'
         ).css("display", "block");
       } else {
         $('#register_error').html(
