@@ -6,17 +6,22 @@ import re
 import string
 import fnmatch
 
+from textwrap import dedent
 from external_auth.models import ExternalAuthMap
 from external_auth.djangostore import DjangoOpenIDStore
 
 from django.conf import settings
 from django.contrib.auth import REDIRECT_FIELD_NAME, authenticate, login
 from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse
+
 from student.models import UserProfile, TestCenterUser, TestCenterRegistration
 
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.http import urlquote
 from django.shortcuts import redirect
+from django.utils.translation import ugettext as _
+
 from mitxmako.shortcuts import render_to_response, render_to_string
 try:
     from django.views.decorators.csrf import csrf_exempt
@@ -40,6 +45,7 @@ from courseware.model_data import ModelDataCache
 from xmodule.modulestore.django import modulestore
 from xmodule.course_module import CourseDescriptor
 from xmodule.modulestore import Location
+from xmodule.modulestore.exceptions import ItemNotFoundError
 
 log = logging.getLogger("mitx.external_auth")
 
@@ -319,10 +325,11 @@ def shib_login(request, retfun=None):
     #http://www.incommonfederation.org/attributesummary.html#eduPersonPrincipal
     #but the configuration is in the shibboleth software.
     
-    shib_error_msg = """
-    Your university identity server did not return your ID information to us.
-    Please try logging in again.  (You may need to restart your browser.)
-    """
+    shib_error_msg = _(dedent(
+        """
+        Your university identity server did not return your ID information to us.
+        Please try logging in again.  (You may need to restart your browser.)
+        """ ))
     
     if not request.META.get('REMOTE_USER'):
         return default_render_failure(request, shib_error_msg)
@@ -350,6 +357,47 @@ def shib_login(request, retfun=None):
                 email = shib['mail'],
                 fullname = "%s %s" % (shib['givenName'], shib['sn']),
                 retfun = retfun)
+
+# Dispatcher function for selecting the specific login method
+# required by the course
+def course_specific_login(request, course_id):
+    try:
+        course = course_from_id(course_id)
+    except ItemNotFoundError:
+        #couldn't find the course, will just return vanilla signin page
+        return redirect('signin_user')
+    
+    query_string = request.META.get("QUERY_STRING", '')
+
+    #now the dispatching conditionals.  Only shib for now
+    if settings.MITX_FEATURES.get('AUTH_USE_SHIB') and 'shib:' in course.enrollment_domain:
+        if query_string:
+            return redirect("%s?%s" % (reverse('shib-login'), query_string))
+        return redirect('shib-login')
+    
+    #Default fallthrough to normal signin page
+    return redirect('signin_user')
+
+# Dispatcher function for selecting the specific registration method
+# required by the course
+def course_specific_register(request, course_id):
+    try:
+        course = course_from_id(course_id)
+    except ItemNotFoundError:
+        #couldn't find the course, will just return vanilla registration page
+        return redirect('register_user')
+    
+    query_string = request.META.get("QUERY_STRING", '')
+
+    #now the dispatching conditionals.  Only shib for now
+    if settings.MITX_FEATURES.get('AUTH_USE_SHIB') and 'shib:' in course.enrollment_domain:
+        #shib-login takes care of both registration and login flows
+        if query_string:
+            return redirect("%s?%s" % (reverse('shib-login'), query_string))
+        return redirect('shib-login')
+    
+    #Default fallthrough to normal registration page
+    return redirect('register_user')
 
 
 # -----------------------------------------------------------------------------

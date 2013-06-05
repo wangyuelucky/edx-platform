@@ -95,10 +95,9 @@ site_status_msg = get_site_status_msg(course_id)
         % endif
       </%block>
       % if not settings.MITX_FEATURES['DISABLE_LOGIN_BUTTON']:
-          % if course and settings.MITX_FEATURES.get('RESTRICT_ENROLL_BY_REG_METHOD') and settings.MITX_FEATURES.get('AUTH_USE_SHIB') \
-            and 'shib:' in course.restrict_reg:
+          % if course and settings.MITX_FEATURES.get('RESTRICT_ENROLL_BY_REG_METHOD') and course.enrollment_domain:
           <li class="nav-global-04">
-            <a class="cta cta-register" href="${reverse('shib-login')}">Register Now</a>
+            <a class="cta cta-register" href="${reverse('course-specific-register', args=[course.id])}">Register Now</a>
           </li>
           % else:
           <li class="nav-global-04">
@@ -111,9 +110,8 @@ site_status_msg = get_site_status_msg(course_id)
     <ol class="right nav-courseware">
     <li class="nav-courseware-01">
       % if not settings.MITX_FEATURES['DISABLE_LOGIN_BUTTON']:
-          % if course and settings.MITX_FEATURES.get('RESTRICT_ENROLL_BY_REG_METHOD') and settings.MITX_FEATURES.get('AUTH_USE_SHIB') \
-            and 'shib:' in course.restrict_reg:
-          <a class="cta cta-login" href="${reverse('shib-login')}${login_query()}">Log in</a>
+          % if course and settings.MITX_FEATURES.get('RESTRICT_ENROLL_BY_REG_METHOD') and course.enrollment_domain:
+          <a class="cta cta-login" href="${reverse('course-specific-login', args=[course.id])}${login_query()}">Log in</a>
           % else:
           <a class="cta cta-login" href="/login${login_query()}">Log in</a>
           % endif

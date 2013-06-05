@@ -366,6 +366,16 @@ if settings.MITX_FEATURES.get('AUTH_USE_SHIB'):
         url(r'^shib-login/$', 'external_auth.views.shib_login', name='shib-login'),
     )
 
+if settings.MITX_FEATURES.get('RESTRICT_ENROLL_BY_REG_METHOD'):
+    urlpatterns += (
+        url(r'^course_specific_login/(?P<course_id>[^/]+/[^/]+/[^/]+)/$',
+            'external_auth.views.course_specific_login', name='course-specific-login'),
+        url(r'^course_specific_registration/(?P<course_id>[^/]+/[^/]+/[^/]+)/$',
+            'external_auth.views.course_specific_register', name='course-specific-register'),
+
+    )
+
+
 if settings.MITX_FEATURES.get('AUTH_USE_OPENID_PROVIDER'):
     urlpatterns += (
         url(r'^openid/provider/login/$', 'external_auth.views.provider_login', name='openid-provider-login'),

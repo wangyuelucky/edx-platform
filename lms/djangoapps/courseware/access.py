@@ -143,10 +143,10 @@ def _has_access_course_desc(user, course, action):
         (staff can always enroll)
         """
         # if using registration method to restrict (say shibboleth)
-        if settings.MITX_FEATURES.get('RESTRICT_ENROLL_BY_REG_METHOD') and course.restrict_reg:
+        if settings.MITX_FEATURES.get('RESTRICT_ENROLL_BY_REG_METHOD') and course.enrollment_domain:
             if user is not None and user.is_authenticated() and \
-                ExternalAuthMap.objects.filter(user=user, external_domain=course.restrict_reg):
-                debug("Allow: external_auth of " + course.restrict_reg)
+                ExternalAuthMap.objects.filter(user=user, external_domain=course.enrollment_domain):
+                debug("Allow: external_auth of " + course.enrollment_domain)
                 reg_method_ok = True
             else:
                 reg_method_ok = False
