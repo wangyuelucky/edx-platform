@@ -671,8 +671,6 @@ def create_account(request, post_override=None):
     login(request, login_user)
     request.session.set_expiry(0)
 
-    try_change_enrollment(request)
-
     if DoExternalAuth:
         eamap.user = login_user
         eamap.dtsignup = datetime.datetime.now(UTC)
@@ -683,6 +681,8 @@ def create_account(request, post_override=None):
             log.debug('bypassing activation email')
             login_user.is_active = True
             login_user.save()
+
+    try_change_enrollment(request)
 
     statsd.increment("common.student.account_created")
 

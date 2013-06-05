@@ -17,7 +17,7 @@ from django.core.urlresolvers import reverse
 
 from student.models import UserProfile, TestCenterUser, TestCenterRegistration
 
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
 from django.utils.http import urlquote
 from django.shortcuts import redirect
 from django.utils.translation import ugettext as _
@@ -163,7 +163,15 @@ def external_login_or_signup(request,
 
     login(request, user)
     request.session.set_expiry(0)
-    student_views.try_change_enrollment(request)
+    
+    # Now to try enrollment
+    # Need to special case Shibboleth here because it logs in via a GET.
+    # testing request.method for extra paranoia
+    if 'shib:' in external_domain and request.method == 'GET':
+        enroll_request = make_shib_enrollment_request(request)
+        student_views.try_change_enrollment(enroll_request)
+    else:
+        student_views.try_change_enrollment(request)
     log.info("Login success - {0} ({1})".format(user.username, user.email))
     if retfun is None:
         return redirect('/')
@@ -357,6 +365,30 @@ def shib_login(request, retfun=None):
                 email = shib['mail'],
                 fullname = "%s %s" % (shib['givenName'], shib['sn']),
                 retfun = retfun)
+
+def make_shib_enrollment_request(request):
+    """
+        Need this hack function because shibboleth logins don't happen over POST
+        but change_enrollment expects its request to be a POST, with
+        enrollment_action and course_id POST parameters.
+    """
+    enroll_request = HttpRequest()
+    enroll_request.user = request.user
+    enroll_request.session = request.session
+    enroll_request.method = "POST"
+
+    # copy() also makes GET and POST mutable
+    # See https://docs.djangoproject.com/en/dev/ref/request-response/#django.http.QueryDict.update
+    enroll_request.GET = request.GET.copy()
+    enroll_request.POST = request.POST.copy()
+    
+    # also have to copy these GET parameters over to POST
+    if "enrollment_action" not in enroll_request.POST and "enrollment_action" in enroll_request.GET:
+        enroll_request.POST.setdefault('enrollment_action', enroll_request.GET.get('enrollment_action'))
+    if "course_id" not in enroll_request.POST and "course_id" in enroll_request.GET:
+        enroll_request.POST.setdefault('course_id', enroll_request.GET.get('course_id'))
+
+    return enroll_request
 
 # Dispatcher function for selecting the specific login method
 # required by the course
