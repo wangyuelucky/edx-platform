@@ -22,6 +22,8 @@ from courseware.module_render import get_module_for_descriptor_internal
 
 # define different loggers for use within tasks and on client side
 TASK_LOG = get_task_logger(__name__)
+# define custom task state:
+PROGRESS = 'PROGRESS'
 
 
 class UpdateProblemModuleStateError(Exception):
@@ -120,11 +122,11 @@ def _update_problem_module_state_internal(course_id, module_state_key, student_i
                 num_updated += 1
 
         # update task status:
-        current_task.update_state(state='PROGRESS', meta=get_task_progress())
+        current_task.update_state(state=PROGRESS, meta=get_task_progress())
 
     task_progress = get_task_progress()
     # update progress without updating the state
-    current_task.update_state(state='PROGRESS', meta=task_progress)
+    current_task.update_state(state=PROGRESS, meta=task_progress)
     return task_progress
 
 
