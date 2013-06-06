@@ -64,7 +64,7 @@ class LoncapaProblem(object):
     Main class for capa Problems.
     '''
 
-    def __init__(self, problem_text, id, state=None, seed=None, system=None):
+    def __init__(self, problem_text, id, state=None, seed=None, system=None, hinter=None):
         '''
         Initializes capa Problem.
 
@@ -92,6 +92,7 @@ class LoncapaProblem(object):
             raise Exception()
 
         state = state or {}
+        self.hinter = hinter
 
         # Set seed according to the following priority:
         #       1. Contained in problem's state
@@ -601,7 +602,7 @@ class LoncapaProblem(object):
 
             # instantiate capa Response
             responder = response_tag_dict[response.tag](response, inputfields,
-                                                        self.context, self.system)
+                                                        self.context, self.system, self.hinter)
             # save in list in self
             self.responders[response] = responder
 

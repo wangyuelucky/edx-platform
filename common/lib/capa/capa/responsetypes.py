@@ -125,7 +125,7 @@ class LoncapaResponse(object):
     allowed_inputfields = []
     required_attributes = []
 
-    def __init__(self, xml, inputfields, context, system=None):
+    def __init__(self, xml, inputfields, context, system=None, hinter=None):
         '''
         Init is passed the following arguments:
 
@@ -139,6 +139,7 @@ class LoncapaResponse(object):
         self.inputfields = inputfields
         self.context = context
         self.system = system
+        self.hinter = hinter
 
         self.id = xml.get('id')
 
@@ -247,91 +248,102 @@ class LoncapaResponse(object):
         Modifies new_cmap, by adding hints to answer_id entries as appropriate.
         '''
         hintgroup = self.xml.find('hintgroup')
-        if hintgroup is None:
-            return
+        if hintgroup is not None:
 
-        # hint specified by function?
-        hintfn = hintgroup.get('hintfn')
-        if hintfn:
-            # Hint is determined by a function defined in the <script> context; evaluate
-            # that function to obtain list of hint, hintmode for each answer_id.
+            # hint specified by function?
+            hintfn = hintgroup.get('hintfn')
+            if hintfn:
+                # Hint is determined by a function defined in the <script> context; evaluate
+                # that function to obtain list of hint, hintmode for each answer_id.
 
-            # The function should take arguments (answer_ids, student_answers, new_cmap, old_cmap)
-            # and it should modify new_cmap as appropriate.
+                # The function should take arguments (answer_ids, student_answers, new_cmap, old_cmap)
+                # and it should modify new_cmap as appropriate.
 
-            # We may extend this in the future to add another argument which provides a
-            # callback procedure to a social hint generation system.
+                # We may extend this in the future to add another argument which provides a
+                # callback procedure to a social hint generation system.
 
-            global CORRECTMAP_PY
-            if CORRECTMAP_PY is None:
-                # We need the CorrectMap code for hint functions. No, this is not great.
-                CORRECTMAP_PY = inspect.getsource(correctmap)
+                global CORRECTMAP_PY
+                if CORRECTMAP_PY is None:
+                    # We need the CorrectMap code for hint functions. No, this is not great.
+                    CORRECTMAP_PY = inspect.getsource(correctmap)
 
-            code = (
-                CORRECTMAP_PY + "\n" +
-                self.context['script_code'] + "\n" +
-                textwrap.dedent("""
-                    new_cmap = CorrectMap()
-                    new_cmap.set_dict(new_cmap_dict)
-                    old_cmap = CorrectMap()
-                    old_cmap.set_dict(old_cmap_dict)
-                    {hintfn}(answer_ids, student_answers, new_cmap, old_cmap)
-                    new_cmap_dict.update(new_cmap.get_dict())
-                    old_cmap_dict.update(old_cmap.get_dict())
-                    """).format(hintfn=hintfn)
-            )
-            globals_dict = {
-                'answer_ids': self.answer_ids,
-                'student_answers': student_answers,
-                'new_cmap_dict': new_cmap.get_dict(),
-                'old_cmap_dict': old_cmap.get_dict(),
-            }
+                code = (
+                    CORRECTMAP_PY + "\n" +
+                    self.context['script_code'] + "\n" +
+                    textwrap.dedent("""
+                        new_cmap = CorrectMap()
+                        new_cmap.set_dict(new_cmap_dict)
+                        old_cmap = CorrectMap()
+                        old_cmap.set_dict(old_cmap_dict)
+                        {hintfn}(answer_ids, student_answers, new_cmap, old_cmap)
+                        new_cmap_dict.update(new_cmap.get_dict())
+                        old_cmap_dict.update(old_cmap.get_dict())
+                        """).format(hintfn=hintfn)
+                )
+                globals_dict = {
+                    'answer_ids': self.answer_ids,
+                    'student_answers': student_answers,
+                    'new_cmap_dict': new_cmap.get_dict(),
+                    'old_cmap_dict': old_cmap.get_dict(),
+                }
 
-            try:
-                safe_exec.safe_exec(code, globals_dict, python_path=self.context['python_path'], slug=self.id)
-            except Exception as err:
-                msg = 'Error %s in evaluating hint function %s' % (err, hintfn)
-                msg += "\nSee XML source line %s" % getattr(
-                    self.xml, 'sourceline', '<unavailable>')
-                raise ResponseError(msg)
+                try:
+                    safe_exec.safe_exec(code, globals_dict, python_path=self.context['python_path'], slug=self.id)
+                except Exception as err:
+                    msg = 'Error %s in evaluating hint function %s' % (err, hintfn)
+                    msg += "\nSee XML source line %s" % getattr(
+                        self.xml, 'sourceline', '<unavailable>')
+                    raise ResponseError(msg)
 
-            new_cmap.set_dict(globals_dict['new_cmap_dict'])
-            return
+                new_cmap.set_dict(globals_dict['new_cmap_dict'])
+                
 
-        # hint specified by conditions and text dependent on conditions (a-la Loncapa design)
-        # see http://help.loncapa.org/cgi-bin/fom?file=291
-        #
-        # Example:
-        #
-        # <formularesponse samples="x@-5:5#11" id="11" answer="$answer">
-        #   <textline size="25" />
-        #   <hintgroup>
-        #     <formulahint samples="x@-5:5#11" answer="$wrongans" name="inversegrad"></formulahint>
-        #     <hintpart on="inversegrad">
-        #       <text>You have inverted the slope in the question.  The slope is
-        #             (y2-y1)/(x2 - x1) you have the slope as (x2-x1)/(y2-y1).</text>
-        #     </hintpart>
-        #   </hintgroup>
-        # </formularesponse>
+            # hint specified by conditions and text dependent on conditions (a-la Loncapa design)
+            # see http://help.loncapa.org/cgi-bin/fom?file=291
+            #
+            # Example:
+            #
+            # <formularesponse samples="x@-5:5#11" id="11" answer="$answer">
+            #   <textline size="25" />
+            #   <hintgroup>
+            #     <formulahint samples="x@-5:5#11" answer="$wrongans" name="inversegrad"></formulahint>
+            #     <hintpart on="inversegrad">
+            #       <text>You have inverted the slope in the question.  The slope is
+            #             (y2-y1)/(x2 - x1) you have the slope as (x2-x1)/(y2-y1).</text>
+            #     </hintpart>
+            #   </hintgroup>
+            # </formularesponse>
 
-        if (self.hint_tag is not None
-            and hintgroup.find(self.hint_tag) is not None
-                and hasattr(self, 'check_hint_condition')):
+            if (self.hint_tag is not None
+                and hintgroup.find(self.hint_tag) is not None
+                    and hasattr(self, 'check_hint_condition')):
 
-            rephints = hintgroup.findall(self.hint_tag)
-            hints_to_show = self.check_hint_condition(
-                rephints, student_answers)
+                rephints = hintgroup.findall(self.hint_tag)
+                hints_to_show = self.check_hint_condition(
+                    rephints, student_answers)
 
-            # can be 'on_request' or 'always' (default)
-            hintmode = hintgroup.get('mode', 'always')
-            for hintpart in hintgroup.findall('hintpart'):
-                if hintpart.get('on') in hints_to_show:
-                    hint_text = hintpart.find('text').text
-                    # make the hint appear after the last answer box in this
-                    # response
-                    aid = self.answer_ids[-1]
-                    new_cmap.set_hint_and_mode(aid, hint_text, hintmode)
-            log.debug('after hint: new_cmap = %s', new_cmap)
+                # can be 'on_request' or 'always' (default)
+                hintmode = hintgroup.get('mode', 'always')
+                for hintpart in hintgroup.findall('hintpart'):
+                    if hintpart.get('on') in hints_to_show:
+                        hint_text = hintpart.find('text').text
+                        # make the hint appear after the last answer box in this
+                        # response
+                        aid = self.answer_ids[-1]
+                        new_cmap.set_hint_and_mode(aid, hint_text, hintmode)
+                log.debug('after hint: new_cmap = %s', new_cmap)
+
+        #Do external hint function hinting.
+        if self.hinter != None:
+            for answer_id in self.answer_ids:
+                new_cmap[answer_id]['hintmode'] = 'always'
+                if 'hint' not in new_cmap[answer_id]:
+                    new_cmap[answer_id]['hint'] = ''
+                correctness = new_cmap[answer_id]['correctness'] == 'correct'
+                new_cmap[answer_id]['hint'] += self.hinter.get_hint(answer_id, 
+                            student_answers[answer_id],
+                            self.system.seed,
+                            correctness)
 
     @abc.abstractmethod
     def get_score(self, student_answers):
