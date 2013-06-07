@@ -29,6 +29,7 @@ def url_class(is_active):
     <%block name="extratabs" />
     </ol>
     <ol class="course-tabs right">
+      <li><a href="#" id="towtruck">Collaborate</a></li>
         % if masquerade is not UNDEFINED:
           % if staff_access and masquerade is not None:
           <li><a href="#" id="staffstatus">Staff view</a></li>
@@ -38,6 +39,15 @@ def url_class(is_active):
     </ol>
   </div>
 </nav>
+
+<script src="//towtruck.mozillalabs.com/towtruck.js"></script>
+<script>
+  $("#towtruck").click(function(e) {
+      TowTruck(this);
+      $(this).text("Collaborating")
+      return false;
+  });
+</script>
 
 % if masquerade is not UNDEFINED:
   % if staff_access and masquerade is not None:
