@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.append(os.path.abspath('.'))
 
-from paver.easy import task, needs, consume_args, no_help
+from paver.easy import task, needs, consume_args, cmdopts, no_help
 from subprocess import call
 from pprint import pprint
 
@@ -32,6 +32,17 @@ def auto():
 def print_config():
     """ Print paver config """
     pprint(config)
+
+
+@task
+@cmdopts([
+    ("public", "p", "build public docs"),
+])
+def opt_test(options):
+    """ Test paver options parsing """
+    print 'test options'
+    print options
+    print options.opt_test.public
 
 
 @task
