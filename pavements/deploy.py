@@ -1,7 +1,13 @@
 import re
+import os
+from paver.easy import task, needs, consume_args, no_help
+from subprocess import call
+
+from pavements.config import config
+from pavements.helpers import *
 
 # Packaging constants
-COMMIT = ENV.get("GIT_COMMIT", `git rev-parse HEAD`).strip()[0, 10]
+COMMIT = os.environ.get("GIT_COMMIT", os.system("git rev-parse HEAD")).strip()[0, 10]
 PACKAGE_NAME = "mitx"
 BRANCH = re.sub('origin/', '', (re.sub('refs/heads/', '', (ENV.get("GIT_BRANCH", `git symbolic-ref -q HEAD`).strip()))))
 
