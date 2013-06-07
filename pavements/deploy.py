@@ -17,6 +17,6 @@ def autodeploy_properties():
     """Build a properties file used to trigger autodeploy builds"""
     with open("autodeploy.properties", "w") as f:
         f.write("UPSTREAM_NOOP=false\n")
-        f.write("UPSTREAM_BRANCH=%s\n") % BRANCH
-        f.write("UPSTREAM_JOB=%s\n") % PACKAGE_NAME
-        f.write("UPSTREAM_REVISION=%s\n") % COMMIT
+        f.write("UPSTREAM_BRANCH=%s\n" % BRANCH)
+        f.write("UPSTREAM_JOB=%s\n" % PACKAGE_NAME)
+        f.write("UPSTREAM_REVISION=%s\n" % COMMIT)
