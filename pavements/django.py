@@ -19,7 +19,7 @@ def predjango():
     """ Clean up the pyc files and install local requirements"""
     os.system("find . -type f -name *.pyc -delete")
     with pushd(config['REPO_ROOT']):
-        subprocess.call('pip install -q --no-index -r requirements/edx/local.txt')
+        os.system("pip install -q --no-index -r requirements/edx/local.txt")
 
 
 @task
