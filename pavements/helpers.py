@@ -22,11 +22,14 @@ def django_admin(system, env, command, *args):
 
 def select_executable(cmds):
     """ Finds a corresponding path for the given commands"""
-    found_cmds = [subprocess.check_output(['which', cmd]).strip() for cmd in cmds]
-    try:
-        return found_cmds[0]
-    except IndexError:
-        print "No executables found from %s" % cmds.join(', ')
+    for cmd in cmds:
+        try:
+            paths = subprocess.check_output(['which', cmd]).split('\n')
+            return paths[0]
+        except (subprocess.CalledProcessError, IndexError):
+            pass
+
+    raise RuntimeError("could for find command in " + str(cmds))
 
 
 def hash_files_dirs(files, dirs=[]):
