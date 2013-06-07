@@ -11,6 +11,7 @@ from pavements.helpers import hash_files_dirs
 import pavements.docs
 from pavements.prereqs import *
 from pavements.django import *
+from pavements.deploy import *
 
 
 @task
