@@ -2,6 +2,7 @@ import os
 import glob2
 import hashlib
 import re
+import subprocess
 
 from .config import config
 
@@ -10,6 +11,15 @@ def is_empty(dictionary):
     if dictionary:
         return False
     return True
+
+
+def select_executable(cmds):
+    """ Finds a corresponding path for the given commands"""
+    found_cmds = [subprocess.check_output(['which', cmd]).strip() for cmd in cmds]
+    try:
+        return found_cmds[0]
+    except IndexError:
+        print "No executables found from %s" % cmds.join(', ')
 
 
 class cd:
