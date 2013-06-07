@@ -42,6 +42,9 @@ def url_class(is_active):
 
 <script src="//towtruck.mozillalabs.com/towtruck.js"></script>
 <script>
+  TowTruckConfig_getUserName = function() {
+    return '${user.username}';
+  };
   $("#towtruck").click(function(e) {
       TowTruck(this);
       $(this).text("Collaborating")
