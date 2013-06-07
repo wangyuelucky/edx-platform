@@ -13,6 +13,13 @@ def is_empty(dictionary):
     return True
 
 
+def django_admin(system, env, command, *args):
+    """ wrapper around django-admin """
+    django_admin_cmd = os.environ.get('DJANGO_ADMIN_PATH') or select_executable(['django-admin.py', 'django-admin'])
+    return "{django_admin} {command} --traceback --settings={system}.envs.{env} --pythonpath=. {args}".format(
+        django_admin=django_admin_cmd, command=command, system=system, env=env, args=" ".join(args))
+
+
 def select_executable(cmds):
     """ Finds a corresponding path for the given commands"""
     found_cmds = [subprocess.check_output(['which', cmd]).strip() for cmd in cmds]
@@ -20,24 +27,6 @@ def select_executable(cmds):
         return found_cmds[0]
     except IndexError:
         print "No executables found from %s" % cmds.join(', ')
-
-
-class cd:
-    """
-    Wrap change directory
-
-    From http://stackoverflow.com/questions/431684/how-do-i-cd-in-python
-    """
-
-    def __init__(self, newPath):
-        self.newPath = newPath
-
-    def __enter__(self):
-        self.savedPath = os.getcwd()
-        os.chdir(self.newPath)
-
-    def __exit__(self, etype, value, traceback):
-        os.chdir(self.savedPath)
 
 
 def hash_files_dirs(files, dirs=[]):
