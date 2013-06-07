@@ -20,7 +20,7 @@ def directory_prereqs():
     ../db
     """
 
-    prereq_dirs = [config['LOG_DIR'], config['DATA_DIR'], config['DB_DIR']]
+    prereq_dirs = [config['LOG_DIR'], config['DATA_DIR'], config['DB_DIR'], config['UPLOADS_DIR']]
 
     for dir_path in prereq_dirs:
         if not os.path.exists(dir_path):
