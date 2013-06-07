@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.append(os.path.abspath('.'))
 
-from paver.easy import task, needs, consume_args, no_help
+from paver.easy import task, needs, consume_args, cmdopts, no_help
 from subprocess import call
 from pprint import pprint
 
@@ -21,6 +21,7 @@ def default():
 
 
 @task
+@needs(['directory_prereqs'])
 @no_help
 def auto():
     """ Setup for other tasks """
@@ -34,11 +35,14 @@ def print_config():
 
 
 @task
-def test_fingerprint():
-    files = []
-    dirs = []
-    files.append("/Users/msteele/Desktop/hashplay/foo")
-    print hash_files_dirs(files, dirs)
+@cmdopts([
+    ("public", "p", "build public docs"),
+])
+def opt_test(options):
+    """ Test paver options parsing """
+    print 'test options'
+    print options
+    print options.opt_test.public
 
 
 @task

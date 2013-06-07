@@ -1,4 +1,5 @@
 import os
+import glob2
 import hashlib
 import re
 
@@ -36,15 +37,15 @@ def hash_files_dirs(files, dirs=[]):
 
     files and dirs are fully qualified paths.
     """
-    print "testing hash_files_dirs"
-
     m = hashlib.md5()
 
     for file_path in files:
-        print "adding file to hash: %s" % file_path
-        with open(file_path, 'r') as f:
-            body = f.read()
-            m.update(body)
+        # handle both single files and expansions (like requirements/**/*)
+        for single_file in glob2.glob(file_path):
+            print "adding file to hash: %s" % single_file
+            with open(single_file, 'r') as f:
+                body = f.read()
+                m.update(body)
 
     for dir_path in dirs:
         print "adding dir to hash: %s" % dir_path
@@ -67,13 +68,16 @@ def has_changed_files_dirs(callback, files, dirs=[]):
 
     # cache_file_name = files[0].gsub(/\W+/, '-').sub(/-+$/, '')) + '.md5'
     cache_file_name = files[0]
+    print cache_file_name
     cache_file_name = re.sub(r'\W+', '-', cache_file_name)
     cache_file_name = re.sub(r'-+$', '', cache_file_name)
     cache_file_name += '.md5'
+    print cache_file_name
 
     cache_file = os.path.join(config['PREREQS_MD5_DIR'], cache_file_name)
 
     now_hash = hash_files_dirs(files, dirs)
+    print cache_file
 
     if os.path.isfile(cache_file):
         with open(cache_file, 'r') as f:

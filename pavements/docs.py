@@ -1,6 +1,6 @@
 # --- Develop and public documentation ---
 import os
-from paver.easy import task, needs, consume_args, no_help
+from paver.easy import task, needs, consume_args, cmdopts, no_help, pushd
 from subprocess import call
 
 from pavements.config import config
@@ -10,35 +10,41 @@ import webbrowser
 
 
 @task
-@consume_args
-def builddocs(args):
+@cmdopts([
+    ("public", "p", "build public docs"),
+])
+def builddocs(options):
     """ Invoke sphinx 'make build' to generate docs. """
-    if 'pub' in args:
+    if 'public' in options.builddocs:
         path = "doc/public"
     else:
         path = "docs"
 
-    with cd(os.path.join(config['REPO_ROOT'], path)):
+    with pushd(os.path.join(config['REPO_ROOT'], path)):
         call(['make', 'html'])
 
 
 @task
-@consume_args
-def showdocs(args):
+@cmdopts([
+    ("public", "p", "show public docs"),
+])
+def showdocs(options):
     """
     Show docs in browser.
     """
-    if "pub" in args:
+    if 'public' in options.showdocs:
         path = "doc/public"
     else:
         path = "docs"
-    
+
     url = "file://" + os.path.join(config["REPO_ROOT"], path, "build/html/index.html")
     webbrowser.open(url)
 
 
 @task
 @needs(['builddocs', 'showdocs'])
-@consume_args
-def doc(args):
+@cmdopts([
+    ("public", "p", "operate on public docs"),
+], share_with=['buildocs', 'showdocs'])
+def doc(options):
     """Build docs and show them in browser"""
