@@ -37,7 +37,7 @@ def install_prereqs():
 
 
 @task
-@needs('pavements.ws.migrate')
+@needs('pavements.workspace.migrate')
 def install_node_prereqs():
     """Install all node prerequisites for the lms and cms"""
     unchanged = 'Node requirements unchanged, nothing to install'
@@ -55,7 +55,7 @@ def install_node_prereqs():
 
 
 @task
-@needs('pavements.ws.migrate')
+@needs('pavements.workspace.migrate')
 def install_ruby_prereqs():
     """Install all python prerequisites for the lms and cms"""
     unchanged = 'Ruby requirements unchanged, nothing to install'
@@ -73,7 +73,7 @@ def install_ruby_prereqs():
 
 
 @task
-@needs('pavements.ws.migrate')
+@needs('pavements.workspace.migrate')
 def install_python_prereqs():
     """Install all python prerequisites for the lms and cms"""
     site_packages_dir = dusc.get_python_lib()
