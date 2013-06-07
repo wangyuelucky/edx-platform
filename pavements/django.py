@@ -1,6 +1,5 @@
 """Django interactions"""
 import os
-import subprocess
 from paver.easy import task, needs, pushd, consume_args
 
 from pavements.config import config
@@ -33,11 +32,38 @@ def runserver(system, env, options):
     os.system(django_admin(system, env, 'runserver', options))
 
 
+def run_system(system, args):
+    """ Parses out the arguments coming from the command line and passes them along"""
+    if len(args) > 0:
+        environment = args[0]
+    else:
+        environment = 'dev'
+
+    if len(args) > 1:
+        options = args[1:]
+    else:
+        options = DEFAULT_OPTIONS[system]
+
+    runserver(system, environment, options)
+
+
 @task
 @needs('pavements.prereqs.install_prereqs', 'predjango')
-def lms(environment='dev', options=DEFAULT_OPTIONS['lms']):
+@consume_args
+def lms(args):
     """
-    Start the #{system} locally with the specified environment (defaults to dev).
+    Start the lms locally with the specified environment (defaults to dev).
     Other useful environments are devplus (for dev testing with a real local database)
     """
-    runserver('lms', environment, options)
+    run_system('lms', args)
+
+
+@task
+@needs('pavements.prereqs.install_prereqs', 'predjango')
+@consume_args
+def cms(args):
+    """
+    Start the cms locally with the specified environment (defaults to dev).
+    Other useful environments are devplus (for dev testing with a real local database)
+    """
+    run_system('cms', args)
