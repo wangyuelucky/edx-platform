@@ -67,3 +67,27 @@ def cms(args):
     Other useful environments are devplus (for dev testing with a real local database)
     """
     run_system('cms', args)
+
+
+@task
+@consume_args
+def dj_admin(args):
+    """Run django-admin <action> against the specified system and environment"""
+    system = "lms"
+    env = "dev"
+    options = ""
+    action = ""
+    if len(args) < 1:
+        raise Exception("Not enough arguments")
+    if len(args) > 0:
+        action = args[0]
+    if len(args) > 1:
+        system = args[1]
+    if len(args) > 2:
+        env = args[2]
+    if len(args) > 3:
+        env = args[3:]
+
+    os.system(django_admin(system, env, action, options))
+
+
