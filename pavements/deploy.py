@@ -9,7 +9,7 @@ from pavements.helpers import *
 # Packaging constants
 COMMIT = os.environ.get("GIT_COMMIT", os.system("git rev-parse HEAD")).strip()[0, 10]
 PACKAGE_NAME = "mitx"
-BRANCH = re.sub('origin/', '', (re.sub('refs/heads/', '', (ENV.get("GIT_BRANCH", os.system("git symbolic-ref -q HEAD"))).strip())))
+BRANCH = re.sub('origin/', '', (re.sub('refs/heads/', '', (os.environ.get("GIT_BRANCH", os.system("git symbolic-ref -q HEAD"))).strip())))
 
 
 @task
