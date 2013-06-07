@@ -15,7 +15,7 @@ def url_class(is_active):
 
 <nav class="${active_page} course-material">
   <div class="inner-wrapper">
-    <ol class="course-tabs">
+    <ol class="course-tabs left">
       % for tab in get_course_tabs(user, course, active_page):
           <li>
              <a href="${tab.link | h}" class="${url_class(tab.is_active)}">
@@ -27,11 +27,14 @@ def url_class(is_active):
           </li>
       % endfor
     <%block name="extratabs" />
+    </ol>
+    <ol class="course-tabs right">
         % if masquerade is not UNDEFINED:
           % if staff_access and masquerade is not None:
-          <li style="float:right"><a href="#" id="staffstatus">Staff view</a></li>
+          <li><a href="#" id="staffstatus">Staff view</a></li>
           % endif
         % endif
+      <%block name="extratabsright" />
     </ol>
   </div>
 </nav>
