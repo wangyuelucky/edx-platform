@@ -48,8 +48,8 @@ def run_system(system, args):
 
 
 @task
-@needs('pavements.prereqs.install_prereqs', 'predjango')
 @consume_args
+@needs('pavements.prereqs.install_prereqs', 'predjango', 'watch_sass')
 def lms(args):
     """
     Start the lms locally with the specified environment (defaults to dev).
@@ -89,5 +89,3 @@ def dj_admin(args):
         env = args[3:]
 
     os.system(django_admin(system, env, action, options))
-
-

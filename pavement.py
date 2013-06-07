@@ -8,10 +8,11 @@ from pprint import pprint
 
 from pavements.config import config
 from pavements.helpers import hash_files_dirs
-import pavements.docs
-from pavements.prereqs import *
-from pavements.django import *
-from pavements.deploy import *
+from pavements import docs
+from pavements import prereqs
+from pavements import django
+# from pavements import deploy
+from pavements import more_assets
 
 
 @task
