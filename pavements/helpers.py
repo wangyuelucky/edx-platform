@@ -37,8 +37,6 @@ def hash_files_dirs(files, dirs=[]):
 
     files and dirs are fully qualified paths.
     """
-    print "testing hash_files_dirs"
-
     m = hashlib.md5()
 
     for file_path in files:

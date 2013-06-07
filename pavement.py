@@ -34,14 +34,6 @@ def print_config():
 
 
 @task
-def test_fingerprint():
-    files = []
-    dirs = []
-    files.append("/Users/msteele/Desktop/hashplay/foo")
-    print hash_files_dirs(files, dirs)
-
-
-@task
 @consume_args
 def rake(args):
     """ Forward commands to rake. """

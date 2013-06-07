@@ -21,7 +21,7 @@ def install_prereqs():
 @task
 @needs('pavements.ws.migrate')
 def install_node_prereqs():
-    """Install all ruby prerequisites for the lms and cms"""
+    """Install all node prerequisites for the lms and cms"""
     unchanged = 'Node requirements unchanged, nothing to install'
 
     def _changed_file(changed):
