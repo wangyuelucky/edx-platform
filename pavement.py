@@ -11,7 +11,7 @@ from pavements.helpers import hash_files_dirs
 from pavements import docs
 from pavements import prereqs
 from pavements import django
-# from pavements import deploy
+from pavements import deploy
 from pavements import more_assets
 
 
