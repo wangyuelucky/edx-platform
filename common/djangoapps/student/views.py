@@ -573,11 +573,15 @@ def create_account(request, post_override=None):
 
     # if doing signup for an external authorization, then get email, password, name from the eamap
     # don't use the ones from the form, since the user could have hacked those
-    # unless originally we didn't get the name from the external auth
+    # unless originally we didn't get a valid email or name from the external auth
     DoExternalAuth = 'ExternalAuthMap' in request.session
     if DoExternalAuth:
         eamap = request.session['ExternalAuthMap']
-        email = eamap.external_email
+        try:
+            validate_email(eamap.external_email)
+            email = eamap.external_email
+        except ValidationError:
+            email = post_vars.get('email', '')
         if eamap.external_name.strip() == '':
             name = post_vars.get('name', '')
         else:

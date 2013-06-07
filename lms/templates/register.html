@@ -136,11 +136,21 @@
         % else:
 
         <div class="message">
-          <h3 class="message-title">Welcome ${extauth_email}</h3>
+          <h3 class="message-title">Welcome ${extauth_id}</h3>
           <p class="message-copy">Enter a public username:</p>
         </div>
 
         <ol class="list-input">
+          
+          % if ask_for_email:
+
+          <li class="field required text" id="field-email">
+            <label for="email">E-mail</label>
+            <input class="" id="email" type="email" name="email" value="" placeholder="example: username@domain.com" />
+          </li>
+          
+          % endif
+          
           <li class="field required text" id="field-username">
             <label for="username">Public Username</label>
             <input id="username" type="text" name="username" value="${extauth_username}" placeholder="example: JaneDoe" required aria-required="true" />

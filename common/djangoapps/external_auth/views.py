@@ -14,6 +14,8 @@ from django.conf import settings
 from django.contrib.auth import REDIRECT_FIELD_NAME, authenticate, login
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 
 from student.models import UserProfile, TestCenterUser, TestCenterRegistration
 
@@ -202,6 +204,7 @@ def signup(request, eamap=None):
 
     context = {'has_extauth_info': True,
                'show_signup_immediately': True,
+               'extauth_id': eamap.external_id,
                'extauth_email': eamap.external_email,
                'extauth_username': username,
                'extauth_name': eamap.external_name,
@@ -210,6 +213,12 @@ def signup(request, eamap=None):
     # detect if full name is blank and ask for it from user
     if eamap.external_name.strip() == '':
         context['ask_for_fullname'] = True
+
+    # validate provided mail and if it's not valid ask the user
+    try:
+        validate_email(eamap.external_email)
+    except ValidationError:
+        context['ask_for_email'] = True
 
     log.debug('Doing signup for %s' % eamap.external_email)
 
@@ -343,7 +352,7 @@ def shib_login(request, retfun=None):
         return default_render_failure(request, shib_error_msg)
     else:
         #if we get here, the user has authenticated properly
-        attrs = ['REMOTE_USER', 'givenName', 'sn', 'eppn', 'mail',
+        attrs = ['REMOTE_USER', 'givenName', 'sn', 'mail',
                  'Shib-Identity-Provider' ]
         shib = {}
         
@@ -355,8 +364,6 @@ def shib_login(request, retfun=None):
         #even if ";" is not present since we are accessing 1st element
         shib['sn'] = shib['sn'].split(";")[0].strip().capitalize()
         shib['givenName'] = shib['givenName'].split(";")[0].strip().capitalize()
-        if not shib['mail']:
-            shib['mail'] = shib['eppn']
 
     return external_login_or_signup(request,
                 external_id = shib['REMOTE_USER'],
