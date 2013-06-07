@@ -1,7 +1,7 @@
 """Django interactions"""
 import os
 import subprocess
-from paver.easy import task, needs, pushd
+from paver.easy import task, needs, pushd, consume_args
 
 from pavements.config import config
 from pavements.helpers import *
@@ -30,14 +30,14 @@ def fastlms():
 
 def runserver(system, env, options):
     """ Run a django server for the given arguments """
-    os.system(django_admin(system, env, runserver, options))
+    os.system(django_admin(system, env, 'runserver', options))
 
 
 @task
 @needs('pavements.prereqs.install_prereqs', 'predjango')
-def lms(env='dev', options=DEFAULT_OPTIONS['lms']):
+def lms(environment='dev', options=DEFAULT_OPTIONS['lms']):
     """
     Start the #{system} locally with the specified environment (defaults to dev).
     Other useful environments are devplus (for dev testing with a real local database)
     """
-    runserver('lms', env, options)
+    runserver('lms', environment, options)
