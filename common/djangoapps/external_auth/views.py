@@ -211,12 +211,12 @@ def signup(request, eamap=None):
                }
 
     # detect if full name is blank and ask for it from user
-    if eamap.external_name.strip() == '':
-        context['ask_for_fullname'] = True
+    context['ask_for_fullname'] = eamap.external_name.strip() == ''
 
     # validate provided mail and if it's not valid ask the user
     try:
         validate_email(eamap.external_email)
+        context['ask_for_email'] = False
     except ValidationError:
         context['ask_for_email'] = True
 
