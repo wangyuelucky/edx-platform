@@ -21,6 +21,7 @@ def default():
 
 
 @task
+@needs(['directory_prereqs'])
 @no_help
 def auto():
     """ Setup for other tasks """

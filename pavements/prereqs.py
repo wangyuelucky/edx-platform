@@ -10,6 +10,24 @@ PREREQ_INSTALL = not os.environ.get('NO_PREREQ_INSTALL')
 
 
 @task
+def directory_prereqs():
+    """
+    Create required directories if they do not exist.
+
+    Required directories are
+    ../log
+    ../data
+    ../db
+    """
+
+    prereq_dirs = [config['LOG_DIR'], config['DATA_DIR'], config['DB_DIR']]
+
+    for dir_path in prereq_dirs:
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+
+
+@task
 @needs('install_node_prereqs',
        'install_ruby_prereqs',
        'install_python_prereqs')
