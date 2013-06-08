@@ -370,7 +370,7 @@ if settings.MITX_FEATURES.get('RESTRICT_ENROLL_BY_REG_METHOD'):
     urlpatterns += (
         url(r'^course_specific_login/(?P<course_id>[^/]+/[^/]+/[^/]+)/$',
             'external_auth.views.course_specific_login', name='course-specific-login'),
-        url(r'^course_specific_registration/(?P<course_id>[^/]+/[^/]+/[^/]+)/$',
+        url(r'^course_specific_register/(?P<course_id>[^/]+/[^/]+/[^/]+)/$',
             'external_auth.views.course_specific_register', name='course-specific-register'),
 
     )

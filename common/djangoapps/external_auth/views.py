@@ -397,46 +397,54 @@ def make_shib_enrollment_request(request):
 
     return enroll_request
 
-# Dispatcher function for selecting the specific login method
-# required by the course
 def course_specific_login(request, course_id):
+    """
+       Dispatcher function for selecting the specific login method
+       required by the course
+    """
+    query_string = request.META.get("QUERY_STRING", '')
+
     try:
         course = course_from_id(course_id)
     except ItemNotFoundError:
         #couldn't find the course, will just return vanilla signin page
-        return redirect('signin_user')
+        return redirect_with_querystring('signin_user', query_string)
     
-    query_string = request.META.get("QUERY_STRING", '')
-
     #now the dispatching conditionals.  Only shib for now
     if settings.MITX_FEATURES.get('AUTH_USE_SHIB') and 'shib:' in course.enrollment_domain:
-        if query_string:
-            return redirect("%s?%s" % (reverse('shib-login'), query_string))
-        return redirect('shib-login')
+        return redirect_with_querystring('shib-login', query_string)
     
     #Default fallthrough to normal signin page
-    return redirect('signin_user')
+    return redirect_with_querystring('signin_user', query_string)
 
-# Dispatcher function for selecting the specific registration method
-# required by the course
 def course_specific_register(request, course_id):
+    """
+        Dispatcher function for selecting the specific registration method
+        required by the course
+    """
+    query_string = request.META.get("QUERY_STRING", '')
+
     try:
         course = course_from_id(course_id)
     except ItemNotFoundError:
         #couldn't find the course, will just return vanilla registration page
-        return redirect('register_user')
+        return redirect_with_querystring('register_user', query_string)
     
-    query_string = request.META.get("QUERY_STRING", '')
-
     #now the dispatching conditionals.  Only shib for now
     if settings.MITX_FEATURES.get('AUTH_USE_SHIB') and 'shib:' in course.enrollment_domain:
         #shib-login takes care of both registration and login flows
-        if query_string:
-            return redirect("%s?%s" % (reverse('shib-login'), query_string))
-        return redirect('shib-login')
-    
+        return redirect_with_querystring('shib-login', query_string)
+            
     #Default fallthrough to normal registration page
-    return redirect('register_user')
+    return redirect_with_querystring('register_user', query_string)
+
+def redirect_with_querystring(view_name, query_string):
+    """
+        Helper function to add query string to redirect views
+    """
+    if query_string:
+        return redirect("%s?%s" % (reverse(view_name), query_string))
+    return redirect(view_name)
 
 
 # -----------------------------------------------------------------------------
