@@ -32,10 +32,6 @@ class ShibSPTest(ModuleStoreTestCase):
     (Apache environment variables set by mod_shib)
     """
     factory = RequestFactory()
-
-
-    def testTrivial(self):
-        self.assertEquals(1+1,2)
     
     def __test_looper(self, testfn):
         """ 
@@ -59,7 +55,10 @@ class ShibSPTest(ModuleStoreTestCase):
     def testRegistrationForm(self):
         """
         Tests the registration form popping up with the proper parameters.
-        """        
+        """
+        if not settings.MITX_FEATURES.get('AUTH_USE_SHIB'):
+            return
+
         def _test_helper(request, mail, givenName, sn):
             request.user = AnonymousUser() #user must not be logged in
             request.session = SessionBase() #empty session
@@ -96,11 +95,10 @@ class ShibSPTest(ModuleStoreTestCase):
         """
         Tests that the correct course specific login and registration urls work for shib
         """
+        if not settings.MITX_FEATURES.get('AUTH_USE_SHIB'):
+            return
 
         course = CourseFactory.create(org='MITx', number='999', display_name='Robot Super Course')
-        print(course.location)
-        print(settings.MITX_FEATURES)
-#        print(CourseMetadata.fetch(course.location))
         ## Need to modify course metadata, so try to go through the store
         try:
             store = modulestore('direct')
