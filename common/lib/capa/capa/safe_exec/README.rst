@@ -16,19 +16,16 @@ __ https://github.com/edx/codejail/blob/master/README.rst
 
 
 1. At the instruction to install packages into the sandboxed code, you'll 
-   need to install both `pre-sandbox-requirements.txt` and 
-   `sandbox-requirements.txt`::
+   need to install three requirements files.  Don't forget that your sandbox
+   virtualenv must be activated.  You may need sudo depending on where the
+   virtualenv is::
 
-    $ sudo pip install -r pre-sandbox-requirements.txt
-    $ sudo pip install -r sandbox-requirements.txt
+    $ cd edx-platform    # wherever your edx-platform working tree is.
+    $ pip install --exists-action w -r requirements/edx-sandbox/base.txt
+    $ pip install --exists-action w -r requirements/edx-sandbox/local.txt
+    $ pip install --exists-action w -r requirements/edx-sandbox/post.txt
 
-2. At the instruction to create the AppArmor profile, you'll need a line in
-   the profile for the sandbox packages.  <EDXPLATFORM> is the full path to
-   your edx_platform repo::
-
-    <EDXPLATFORM>/common/lib/sandbox-packages/** r,
-
-3. You can configure resource limits in settings.py.  A CODE_JAIL setting is
+2. You can configure resource limits in settings.py.  A CODE_JAIL setting is
    available, a dictionary.  The "limits" key lets you adjust the limits for
    CPU time, real time, and memory use.  Setting any of them to zero disables
    that limit::
