@@ -24,7 +24,7 @@ from xmodule.modulestore.django import modulestore
 import mitxmako.middleware as middleware
 from track.views import task_track
 
-from courseware.models import StudentModule, CourseTaskLog
+from courseware.models import StudentModule, CourseTask
 from courseware.model_data import ModelDataCache
 from courseware.module_render import get_module_for_descriptor_internal
 
@@ -78,7 +78,7 @@ def _perform_module_state_update(course_id, module_state_key, student_identifier
           'duration_ms': how long the task has (or had) been running.
 
     Because this is run internal to a task, it does not catch exceptions.  These are allowed to pass up to the
-    next level, so that it can set the failure modes and capture the error trace in the CourseTaskLog and the
+    next level, so that it can set the failure modes and capture the error trace in the CourseTask and the
     result object.
 
     """
@@ -156,9 +156,9 @@ def _perform_module_state_update(course_id, module_state_key, student_identifier
 
 
 @transaction.autocommit
-def _save_course_task_log_entry(entry):
-    """Writes CourseTaskLog entry immediately, ensuring the transaction is committed."""
-    entry.save()
+def _save_course_task(course_task):
+    """Writes CourseTask course_task immediately, ensuring the transaction is committed."""
+    course_task.save()
 
 
 def _update_problem_module_state(entry_id, course_id, module_state_key, student_ident, update_fcn, action_name, filter_fcn,
@@ -166,7 +166,7 @@ def _update_problem_module_state(entry_id, course_id, module_state_key, student_
     """
     Performs generic update by visiting StudentModule instances with the update_fcn provided.
 
-    The `entry_id` is the primary key for the CourseTaskLog entry representing the task.  This function
+    The `entry_id` is the primary key for the CourseTask entry representing the task.  This function
     updates the entry on success and failure of the _perform_module_state_update function it
     wraps.  It is setting the entry's value for task_state based on what Celery would set it to once
     the task returns to Celery:  FAILURE if an exception is encountered, and SUCCESS if it returns normally.
@@ -181,9 +181,9 @@ def _update_problem_module_state(entry_id, course_id, module_state_key, student_
               Pass-through of input `action_name`.
           'duration_ms': how long the task has (or had) been running.
 
-    Before returning, this is also JSON-serialized and stored in the task_output column of the CourseTaskLog entry.
+    Before returning, this is also JSON-serialized and stored in the task_output column of the CourseTask entry.
 
-    If exceptions were raised internally, they are caught and recorded in the CourseTaskLog entry.
+    If exceptions were raised internally, they are caught and recorded in the CourseTask entry.
     This is also a JSON-serialized dict, stored in the task_output column, containing the following keys:
 
            'exception':  type of exception object
@@ -199,11 +199,11 @@ def _update_problem_module_state(entry_id, course_id, module_state_key, student_
     fmt = 'Starting to update problem modules as task "{task_id}": course "{course_id}" problem "{state_key}": nothing {action} yet'
     TASK_LOG.info(fmt.format(task_id=task_id, course_id=course_id, state_key=module_state_key, action=action_name))
 
-    # get the CourseTaskLog to be updated.  If this fails, then let the exception return to Celery.
+    # get the CourseTask to be updated.  If this fails, then let the exception return to Celery.
     # There's no point in catching it here.
-    entry = CourseTaskLog.objects.get(pk=entry_id)
+    entry = CourseTask.objects.get(pk=entry_id)
     entry.task_id = task_id
-    _save_course_task_log_entry(entry)
+    _save_course_task(entry)
 
     # add task_id to xmodule_instance_args, so that it can be output with tracking info:
     if xmodule_instance_args is not None:
@@ -214,7 +214,7 @@ def _update_problem_module_state(entry_id, course_id, module_state_key, student_
     try:
         with dog_stats_api.timer('courseware.tasks.module.{0}.overall_time'.format(action_name)):
             task_progress = _perform_module_state_update(course_id, module_state_key, student_ident, update_fcn,
-                                                                  action_name, filter_fcn, xmodule_instance_args)
+                                                         action_name, filter_fcn, xmodule_instance_args)
     except Exception:
         # try to write out the failure to the entry before failing
         exception_type, exception, traceback = exc_info()
@@ -225,13 +225,13 @@ def _update_problem_module_state(entry_id, course_id, module_state_key, student_
             task_progress['traceback'] = traceback_string[:700]
         entry.task_output = json.dumps(task_progress)
         entry.task_state = FAILURE
-        _save_course_task_log_entry(entry)
+        _save_course_task(entry)
         raise
 
-    # if we get here, we assume we've succeeded, so update the CourseTaskLog entry in anticipation:
+    # if we get here, we assume we've succeeded, so update the CourseTask entry in anticipation:
     entry.task_output = json.dumps(task_progress)
     entry.task_state = SUCCESS
-    _save_course_task_log_entry(entry)
+    _save_course_task(entry)
 
     # log and exit, returning task_progress info as task result:
     fmt = 'Finishing task "{task_id}": course "{course_id}" problem "{state_key}": final: {progress}'
@@ -308,8 +308,8 @@ def _rescore_problem_module_state(module_descriptor, student_module, xmodule_ins
         raise UpdateProblemModuleStateError(msg)
 
     if not hasattr(instance, 'rescore_problem'):
-        # if the first instance doesn't have a rescore method, we should
-        # probably assume that no other instances will either.
+        # This should also not happen, since it should be already checked in the caller,
+        # but check here to be sure.
         msg = "Specified problem does not support rescoring."
         raise UpdateProblemModuleStateError(msg)
 
@@ -338,7 +338,7 @@ def _filter_module_state_for_done(modules_to_update):
 def rescore_problem(entry_id, course_id, task_input, xmodule_instance_args):
     """Rescores problem in `course_id`.
 
-    `entry_id` is the id value of the CourseTaskLog entry that corresponds to this task.
+    `entry_id` is the id value of the CourseTask entry that corresponds to this task.
     `course_id` identifies the course.
     `task_input` should be a dict with the following entries:
 
@@ -392,7 +392,7 @@ def _reset_problem_attempts_module_state(_module_descriptor, student_module, xmo
 def reset_problem_attempts(entry_id, course_id, task_input, xmodule_instance_args):
     """Resets problem attempts to zero for `problem_url` in `course_id` for all students.
 
-    `entry_id` is the id value of the CourseTaskLog entry that corresponds to this task.
+    `entry_id` is the id value of the CourseTask entry that corresponds to this task.
     `course_id` identifies the course.
     `task_input` should be a dict with the following entries:
 
@@ -429,7 +429,7 @@ def _delete_problem_module_state(_module_descriptor, student_module, xmodule_ins
 def delete_problem_state(entry_id, course_id, task_input, xmodule_instance_args):
     """Deletes problem state entirely for `problem_url` in `course_id` for all students.
 
-    `entry_id` is the id value of the CourseTaskLog entry that corresponds to this task.
+    `entry_id` is the id value of the CourseTask entry that corresponds to this task.
     `course_id` identifies the course.
     `task_input` should be a dict with the following entries:
 

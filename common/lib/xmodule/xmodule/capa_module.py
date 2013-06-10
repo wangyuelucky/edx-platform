@@ -846,9 +846,6 @@ class CapaModule(CapaFields, XModule):
 
         try:
             correct_map = self.lcp.rescore_existing_answers()
-            # rescoring should have no effect on attempts, so don't
-            # need to increment here, or mark done.  Just save.
-            self.set_state_from_lcp()
 
         except (StudentInputError, ResponseError, LoncapaProblemError) as inst:
             log.warning("StudentInputError in capa_module:problem_rescore", exc_info=True)
@@ -864,6 +861,10 @@ class CapaModule(CapaFields, XModule):
                 msg += '\nTraceback:\n' + traceback.format_exc()
                 return {'success': msg}
             raise
+
+        # rescoring should have no effect on attempts, so don't
+        # need to increment here, or mark done.  Just save.
+        self.set_state_from_lcp()
 
         self.publish_grade()
 

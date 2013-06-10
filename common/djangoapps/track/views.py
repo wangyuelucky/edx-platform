@@ -109,9 +109,11 @@ def task_track(request_info, task_info, event_type, event, page=None):
 
     The `request_info` is a dict containing information about the original
     task request.  Relevant keys are `username`, `ip`, `agent`, and `host`.
+    While the dict is required, the values in it are not, so that {} can be
+    passed in.
 
-    In addition, a `task_info` dict provides more information to be stored with
-    the `event` dict.
+    In addition, a `task_info` dict provides more information about the current
+    task, to be stored with the `event` dict.  This may also be an empty dict.
 
     The `page` parameter is optional, and allows the name of the page to
     be provided.

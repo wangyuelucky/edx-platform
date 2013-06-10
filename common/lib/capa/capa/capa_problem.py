@@ -296,17 +296,17 @@ class LoncapaProblem(object):
         '''
         return self._grade_answers(None)
 
-    def _grade_answers(self, answers):
+    def _grade_answers(self, student_answers):
         '''
-        Internal grading call used for checking new student answers and also
-        rescoring existing student answers.
+        Internal grading call used for checking new 'student_answers' and also
+        rescoring existing student_answers.
 
-        For new student answers being graded, `answers` is a dict of all the
+        For new student_answers being graded, `student_answers` is a dict of all the
         entries from request.POST, but with the first part of each key removed
         (the string before the first "_").  Thus, for example,
         input_ID123 -> ID123, and input_fromjs_ID123 -> fromjs_ID123.
 
-        For rescoring, `answers` is None.
+        For rescoring, `student_answers` is None.
 
         Calls the Response for each question in this problem, to do the actual grading.
         '''
@@ -323,19 +323,19 @@ class LoncapaProblem(object):
             # student_answers contains a proper answer or the filename of
             # an earlier submission, so for now skip these entirely.
             # TODO: figure out where to get file submissions when rescoring.
-            if 'filesubmission' in responder.allowed_inputfields and answers is None:
+            if 'filesubmission' in responder.allowed_inputfields and student_answers is None:
                 raise Exception("Cannot rescore problems with possible file submissions")
 
-            # use 'answers' only if it is provided, and if it might contain a file
+            # use 'student_answers' only if it is provided, and if it might contain a file
             # submission that would not exist in the persisted "student_answers".
-            if 'filesubmission' in responder.allowed_inputfields and answers is not None:
-                results = responder.evaluate_answers(answers, oldcmap)
+            if 'filesubmission' in responder.allowed_inputfields and student_answers is not None:
+                results = responder.evaluate_answers(student_answers, oldcmap)
             else:
                 results = responder.evaluate_answers(self.student_answers, oldcmap)
             newcmap.update(results)
 
         self.correct_map = newcmap
-        # log.debug('%s: in grade_answers, answers=%s, cmap=%s' % (self,answers,newcmap))
+        # log.debug('%s: in grade_answers, student_answers=%s, cmap=%s' % (self,student_answers,newcmap))
         return newcmap
 
     def get_question_answers(self):
