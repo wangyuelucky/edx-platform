@@ -5,7 +5,6 @@ setup(
     version="0.1.1",
     packages=[
         "loncapa",
-        "verifiers",
     ],
     py_modules=[
         "eia",
