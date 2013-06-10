@@ -33,7 +33,7 @@
         location.href = "${reverse('course-specific-register', args=[course.id])}?course_id=${course.id}&enrollment_action=enroll";
       } else if (xhr.status == 400) { //This means the user did not have permission
         $('#register_error').html('This course has restricted enrollment.  Sorry, you do not have permission to enroll.<br />' +
-                                  'You may need to log out and re-login with a university account, such as Shibboleth'
+                                  'You may need to log out and re-login with a university account, such as WebAuth'
         ).css("display", "block");
       } else {
         $('#register_error').html(

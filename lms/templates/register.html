@@ -267,6 +267,8 @@
       <h3 class="sr">Registration Help</h3>
     </header>
 
+    % if has_extauth_info is UNDEFINED:
+
     <div class="cta">
       <h3>Already registered?</h3>
       <p class="instructions">
@@ -275,6 +277,8 @@
         </a>
       </p>
     </div>
+      
+    % endif
 
     ## TODO: Use a %block tag or something to allow themes to
     ##       override in a more generalizable fashion.

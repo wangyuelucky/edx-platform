@@ -284,9 +284,19 @@ def dashboard(request):
 
     # Get the 3 most recent news
     top_news = _get_news(top=3) if not settings.MITX_FEATURES.get('ENABLE_MKTG_SITE', False) else None
+            
+    # get info w.r.t ExternalAuthMap
+    external_auth_map = None
+    if 'external_auth' in settings.INSTALLED_APPS:
+        from external_auth.models import ExternalAuthMap
+        try:
+            external_auth_map = ExternalAuthMap.objects.get(user=user)
+        except ExternalAuthMap.DoesNotExist:
+            pass
 
     context = {'courses': courses,
                'message': message,
+               'external_auth_map': external_auth_map,
                'staff_access': staff_access,
                'errored_courses': errored_courses,
                'show_courseware_links_for': show_courseware_links_for,
