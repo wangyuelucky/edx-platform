@@ -39,6 +39,7 @@ def instructor_task_status(request):
             succeeded, message = get_task_completion_info(instructor_task)
             status['message'] = message
             status['succeeded'] = succeeded
+        return status
 
     output = {}
     if 'task_id' in request.REQUEST:

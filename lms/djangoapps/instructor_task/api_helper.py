@@ -143,7 +143,7 @@ TODO: Update -- no longer return anything, or maybe the resulting instructor_tas
     entry_needs_saving = False
     output = {}
 
-    if result_state == PROGRESS:
+    if result_state in [PROGRESS, SUCCESS]:
         # construct a status message directly from the task result's result:
         # it needs to go back with the entry passed in.
         instructor_task.task_output = json.dumps(returned_result)
