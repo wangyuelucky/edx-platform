@@ -71,6 +71,9 @@ class ShibSPTest(ModuleStoreTestCase):
         Tests that a user with a shib ExternalAuthMap gets logged in while when
         shib-login is called, while a user without such gets the registration form.
         """
+        if not settings.MITX_FEATURES.get('AUTH_USE_SHIB'):
+            return
+
         student = UserFactory.create()
         extauth = ExternalAuthMap(external_id='testuser@stanford.edu',
                                   external_email='',
@@ -337,6 +340,9 @@ class ShibSPTest(ModuleStoreTestCase):
         """ 
             A functionality test that a student with an existing shib login can auto-enroll in a class with GET params
         """
+        if not settings.MITX_FEATURES.get('AUTH_USE_SHIB'):
+            return
+
         student = UserFactory.create()
         extauth = ExternalAuthMap(external_id='testuser@stanford.edu',
                                   external_email='',
