@@ -498,6 +498,13 @@ class JSInput(InputTypeBase):
                 Attribute('height', "300")]      # iframe height
 
 
+    def _extra_context(self):
+        context = {
+            'jsinput_css': '/static/css/capa/jsinput_css.css',
+            'applet_loader': '/static/js/capa/jsinput.js',
+        }
+
+
         return context
         
 

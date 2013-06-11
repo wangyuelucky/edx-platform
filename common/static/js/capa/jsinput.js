@@ -1,5 +1,6 @@
 (function () {
 
+    console.log("Initialization");
     // This function should only run once, even if there are multiple jsinputs
     // on a page.
     if (typeof(_jsinput_loaded) == 'undefined' || _jsinput_loaded === false) {
@@ -27,16 +28,19 @@
         // updates the inputfield with the passed value.
         function update () {
             var ans;
-            if ( arguments.length > 0) {
-                ans = arguments[0];
+            if ( arguments.length > 1) {
+                console.log("Directly updating input field.");
+                ans = arguments[1];
             } else {
-                $(spec.elem).
+                console.log("Calling gradefn to update input field.");
+                ans = $(spec.elem).
                     find('iframe[name^="iframe_"]').
                     get(0).      // jquery might not be available in the iframe
                     contentWindow.
                     gradefn();
             }
             inputfield().val(ans);
+            console.log("Answer:" + typeof(ans));
             console.log("Answer: " + inputfield().val());
             return;
         }
@@ -49,6 +53,16 @@
             $(updatebutton).click( update );
         }
 
+
+        /*                       Public methods                     */
+
+        // 'that' is the object returned by the constructor. It has a single
+        // public method, "update", which updates the hidden input field.
+        var that = {};
+        that.update = update;
+
+        /*                      Initialization                          */
+        
         if (spec.passive === false) {
             updateHandler();
         } else {
@@ -63,14 +77,6 @@
                 if (id == spec.id) { update(msg); }
             });
         }
-
-        /*                       Public methods                     */
-
-        // 'that' is the object returned by the constructor. It has a single
-        // public method, "update", which updates the hidden input field.
-        var that = {};
-        that.update = update;
-
 
         return that;
     }
@@ -97,6 +103,7 @@
         all.each(function() {
             // Get just the mako variable 'id' from the id attribute
             newid = $(this).attr("id").replace(/^inputtype_/, "");
+            console.log(newid);
             var elem = this ;
             var newJsElem = jsinputConstructor({
                 id: newid ,
@@ -106,5 +113,16 @@
         });
     }
 
+    var iframeInjection = {
+        injectStyles : function (style) {
+            $(document.body).css(style);
+        },
+        sendMySize : function () {
+            var height = html.height;
+            var width = html.width;
+            window.parent.postMessage(['height', height], '*');
+            window.parent.postMessage(['width', width], '*');
+        }
+    }
 
 }).call(this);
