@@ -23,6 +23,13 @@
             return parent.find('input[id^="input_"]');
         }
 
+        // Get the grade function name
+        function getgradefn() {
+            var parent = $(spec.elem).parent();
+            var sect = parent.find('section[class="jsinput"]');
+            return $(sect).attr("data");
+        }
+
         // Put the return value of gradefn in the hidden inputfield.
         // If passed an argument, does not call gradefn, and instead directly
         // updates the inputfield with the passed value.
@@ -36,8 +43,7 @@
                 ans = $(spec.elem).
                     find('iframe[name^="iframe_"]').
                     get(0).      // jquery might not be available in the iframe
-                    contentWindow.
-                    gradefn();
+                    contentWindow[gradefn]();
             }
             inputfield().val(ans);
             console.log("Answer:" + typeof(ans));
@@ -63,6 +69,8 @@
 
         /*                      Initialization                          */
         
+        var gradefn = getgradefn();
+
         if (spec.passive === false) {
             updateHandler();
         } else {

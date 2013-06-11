@@ -493,7 +493,7 @@ class JSInput(InputTypeBase):
         """
         return [Attribute('params', None),
                 Attribute('html_file', None),
-                Attribute('gradefn', None),
+                Attribute('gradefn', "gradefn"),
                 Attribute('width', "400"),       # iframe width
                 Attribute('height', "300")]      # iframe height
 
