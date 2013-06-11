@@ -347,7 +347,7 @@ def shib_login(request, retfun=None):
         Your university identity server did not return your ID information to us.
         Please try logging in again.  (You may need to restart your browser.)
         """ ))
-    
+
     if not request.META.get('REMOTE_USER'):
         return default_render_failure(request, shib_error_msg)
     else:
@@ -364,6 +364,7 @@ def shib_login(request, retfun=None):
         #even if ";" is not present since we are accessing 1st element
         shib['sn'] = shib['sn'].split(";")[0].strip().capitalize()
         shib['givenName'] = shib['givenName'].split(";")[0].strip().capitalize()
+
 
     return external_login_or_signup(request,
                 external_id = shib['REMOTE_USER'],

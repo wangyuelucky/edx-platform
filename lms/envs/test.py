@@ -137,6 +137,7 @@ MITX_FEATURES['AUTH_USE_OPENID_PROVIDER'] = True
 
 ################################## SHIB #######################################
 MITX_FEATURES['AUTH_USE_SHIB'] = True
+MITX_FEATURES['RESTRICT_ENROLL_BY_REG_METHOD'] = True
 
 OPENID_CREATE_USERS = False
 OPENID_UPDATE_DETAILS_FROM_SREG = True
