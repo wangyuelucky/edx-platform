@@ -45,6 +45,8 @@ class @VideoPlayerAlpha extends SubviewAlpha
     if @video.show_captions is true
       @caption = new VideoCaptionAlpha
         el: @el
+        video: @video
+        player: @
         youtubeId: @video.youtubeId('1.0')
         currentSpeed: @currentSpeed()
         captionAssetPath: @video.caption_asset_path
@@ -120,8 +122,6 @@ class @VideoPlayerAlpha extends SubviewAlpha
           # NOTE: It is my strong belief that in the future YouTube Flash player will
           # not get speed changes. This is a dying technology. So we can safely use
           # this indirect method to determine player mode.
-
-
           availableSpeeds = @player.getAvailablePlaybackRates()
           prev_player_type = $.cookie('prev_player_type')
           if availableSpeeds.length > 1
@@ -264,11 +264,15 @@ class @VideoPlayerAlpha extends SubviewAlpha
   toggleFullScreen: (event) =>
     event.preventDefault()
     if @el.hasClass('fullscreen')
+      type = 'not_fullscreen'
       @$('.add-fullscreen').attr('title', 'Fill browser')
       @el.removeClass('fullscreen')
     else
+      type = 'fullscreen'
       @el.addClass('fullscreen')
       @$('.add-fullscreen').attr('title', 'Exit fill browser')
+    @video.log type,
+      currentTime: @currentTime
     if @video.show_captions is true
       @caption.resize()
 
