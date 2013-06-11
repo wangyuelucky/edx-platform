@@ -256,8 +256,8 @@ def instructor_dashboard(request, course_id):
         problem_urlname = request.POST.get('problem_for_all_students', '')
         problem_url = get_module_url(problem_urlname)
         try:
-            course_task = submit_rescore_problem_for_all_students(request, course_id, problem_url)
-            if course_task is None:
+            instructor_task = submit_rescore_problem_for_all_students(request, course_id, problem_url)
+            if instructor_task is None:
                 msg += '<font color="red">Failed to create a background task for rescoring "{0}".</font>'.format(problem_url)
             else:
                 track_msg = 'rescore problem {problem} for all students in {course}'.format(problem=problem_url, course=course_id)
@@ -272,8 +272,8 @@ def instructor_dashboard(request, course_id):
         problem_urlname = request.POST.get('problem_for_all_students', '')
         problem_url = get_module_url(problem_urlname)
         try:
-            course_task = submit_reset_problem_attempts_for_all_students(request, course_id, problem_url)
-            if course_task is None:
+            instructor_task = submit_reset_problem_attempts_for_all_students(request, course_id, problem_url)
+            if instructor_task is None:
                 msg += '<font color="red">Failed to create a background task for resetting "{0}".</font>'.format(problem_url)
             else:
                 track_msg = 'reset problem {problem} for all students in {course}'.format(problem=problem_url, course=course_id)
@@ -359,8 +359,8 @@ def instructor_dashboard(request, course_id):
             else:
                 # "Rescore student's problem submission" case
                 try:
-                    course_task = submit_rescore_problem_for_student(request, course_id, module_state_key, student)
-                    if course_task is None:
+                    instructor_task = submit_rescore_problem_for_student(request, course_id, module_state_key, student)
+                    if instructor_task is None:
                         msg += '<font color="red">Failed to create a background task for rescoring "{0}" for student {1}.</font>'.format(module_state_key, unique_student_identifier)
                     else:
                         track_msg = 'rescore problem {problem} for student {student} in {course}'.format(problem=module_state_key, student=unique_student_identifier, course=course_id)
@@ -724,9 +724,9 @@ def instructor_dashboard(request, course_id):
 
     # generate list of pending background tasks
     if settings.MITX_FEATURES.get('ENABLE_INSTRUCTOR_BACKGROUND_TASKS'):
-        course_tasks = get_running_instructor_tasks(course_id)
+        instructor_tasks = get_running_instructor_tasks(course_id)
     else:
-        course_tasks = None
+        instructor_tasks = None
 
     # display course stats only if there is no other table to display:
     course_stats = None
@@ -747,7 +747,7 @@ def instructor_dashboard(request, course_id):
                'problems': problems,		# psychometrics
                'plots': plots,			# psychometrics
                'course_errors': modulestore().get_item_errors(course.location),
-               'course_tasks': course_tasks,
+               'instructor_tasks': instructor_tasks,
                'djangopid': os.getpid(),
                'mitx_version': getattr(settings, 'MITX_VERSION_STRING', ''),
                'offline_grade_log': offline_grades_available(course_id),
@@ -1325,23 +1325,23 @@ def get_background_task_table(course_id, problem_url, student=None):
                                "Task Output"]
 
         datatable['data'] = []
-        for course_task in history_entries:
+        for instructor_task in history_entries:
             # get duration info, if known:
             duration_ms = 'unknown'
-            if hasattr(course_task, 'task_output'):
-                task_output = json.loads(course_task.task_output)
+            if hasattr(instructor_task, 'task_output'):
+                task_output = json.loads(instructor_task.task_output)
                 if 'duration_ms' in task_output:
                     duration_ms = task_output['duration_ms']
             # get progress status message:
-            success, task_message = get_task_completion_info(course_task)
+            success, task_message = get_task_completion_info(instructor_task)
             status = "Complete" if success else "Incomplete"
             # generate row for this task:
-            row = [str(course_task.task_type),
-                   str(course_task.task_id),
-                   str(course_task.requester),
-                   course_task.created.isoformat(' '),
+            row = [str(instructor_task.task_type),
+                   str(instructor_task.task_id),
+                   str(instructor_task.requester),
+                   instructor_task.created.isoformat(' '),
                    duration_ms,
-                   str(course_task.task_state),
+                   str(instructor_task.task_state),
                    status,
                    task_message]
             datatable['data'].append(row)
