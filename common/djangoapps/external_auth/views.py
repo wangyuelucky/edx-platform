@@ -165,7 +165,7 @@ def external_login_or_signup(request,
 
     login(request, user)
     request.session.set_expiry(0)
-    
+
     # Now to try enrollment
     # Need to special case Shibboleth here because it logs in via a GET.
     # testing request.method for extra paranoia
@@ -331,31 +331,30 @@ def ssl_login(request):
                                     retfun=retfun)
 
 
-
 # -----------------------------------------------------------------------------
 # Shibboleth (Stanford and others.  Uses *Apache* environment variables)
 # -----------------------------------------------------------------------------
 def shib_login(request, retfun=None):
-    
-    #Uses Apache's REMOTE_USER environment variable as the external id.
-    #This in turn typically uses EduPersonPrincipalName
-    #http://www.incommonfederation.org/attributesummary.html#eduPersonPrincipal
-    #but the configuration is in the shibboleth software.
-    
+    """
+        Uses Apache's REMOTE_USER environment variable as the external id.
+        This in turn typically uses EduPersonPrincipalName
+        http://www.incommonfederation.org/attributesummary.html#eduPersonPrincipal
+        but the configuration is in the shibboleth software.
+    """
     shib_error_msg = _(dedent(
         """
         Your university identity server did not return your ID information to us.
         Please try logging in again.  (You may need to restart your browser.)
-        """ ))
+        """))
 
     if not request.META.get('REMOTE_USER'):
         return default_render_failure(request, shib_error_msg)
     else:
         #if we get here, the user has authenticated properly
         attrs = ['REMOTE_USER', 'givenName', 'sn', 'mail',
-                 'Shib-Identity-Provider' ]
+                 'Shib-Identity-Provider']
         shib = {}
-        
+
         for attr in attrs:
             shib[attr] = request.META.get(attr, '')
 
@@ -365,14 +364,14 @@ def shib_login(request, retfun=None):
         shib['sn'] = shib['sn'].split(";")[0].strip().capitalize()
         shib['givenName'] = shib['givenName'].split(";")[0].strip().capitalize()
 
-
     return external_login_or_signup(request,
-                external_id = shib['REMOTE_USER'],
-                external_domain = "shib:" + shib['Shib-Identity-Provider'],
-                credentials = shib,
-                email = shib['mail'],
-                fullname = "%s %s" % (shib['givenName'], shib['sn']),
-                retfun = retfun)
+                                    external_id=shib['REMOTE_USER'],
+                                    external_domain="shib:" + shib['Shib-Identity-Provider'],
+                                    credentials=shib,
+                                    email=shib['mail'],
+                                    fullname="%s %s" % (shib['givenName'], shib['sn']),
+                                    retfun=retfun)
+
 
 def make_shib_enrollment_request(request):
     """
@@ -389,7 +388,7 @@ def make_shib_enrollment_request(request):
     # See https://docs.djangoproject.com/en/dev/ref/request-response/#django.http.QueryDict.update
     enroll_request.GET = request.GET.copy()
     enroll_request.POST = request.POST.copy()
-    
+
     # also have to copy these GET parameters over to POST
     if "enrollment_action" not in enroll_request.POST and "enrollment_action" in enroll_request.GET:
         enroll_request.POST.setdefault('enrollment_action', enroll_request.GET.get('enrollment_action'))
@@ -397,6 +396,7 @@ def make_shib_enrollment_request(request):
         enroll_request.POST.setdefault('course_id', enroll_request.GET.get('course_id'))
 
     return enroll_request
+
 
 def course_specific_login(request, course_id):
     """
@@ -410,13 +410,14 @@ def course_specific_login(request, course_id):
     except ItemNotFoundError:
         #couldn't find the course, will just return vanilla signin page
         return redirect_with_querystring('signin_user', query_string)
-    
+
     #now the dispatching conditionals.  Only shib for now
     if settings.MITX_FEATURES.get('AUTH_USE_SHIB') and 'shib:' in course.enrollment_domain:
         return redirect_with_querystring('shib-login', query_string)
-    
+
     #Default fallthrough to normal signin page
     return redirect_with_querystring('signin_user', query_string)
+
 
 def course_specific_register(request, course_id):
     """
@@ -430,14 +431,15 @@ def course_specific_register(request, course_id):
     except ItemNotFoundError:
         #couldn't find the course, will just return vanilla registration page
         return redirect_with_querystring('register_user', query_string)
-    
+
     #now the dispatching conditionals.  Only shib for now
     if settings.MITX_FEATURES.get('AUTH_USE_SHIB') and 'shib:' in course.enrollment_domain:
         #shib-login takes care of both registration and login flows
         return redirect_with_querystring('shib-login', query_string)
-            
+
     #Default fallthrough to normal registration page
     return redirect_with_querystring('register_user', query_string)
+
 
 def redirect_with_querystring(view_name, query_string):
     """
