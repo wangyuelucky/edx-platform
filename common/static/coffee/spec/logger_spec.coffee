@@ -11,6 +11,29 @@ describe 'Logger', ->
         event: '"data"'
         page: window.location.href
 
+    it 'make a callback', ->
+      test = false
+      callback = (event_type, data, element) ->
+        test = true
+      Logger.listen 'myEvent', 'anElement', callback
+      Logger.log 'myEvent', 'someData', 'anElement'
+      expect(test).toBe(true)
+
+    it 'make multiple callbacks with correct data-handling.', ->
+      test1 = false
+      test2 = false
+      sample_data = 'myData'
+      callback1 = (event_type, data, element) ->
+        test1 = (data == sample_data)
+      callback2 = (event_type, data, element) ->
+        test2 = (data == sample_data)
+      Logger.listen 'myEvent', 'anElement', callback1
+      Logger.listen 'myEvent', 'anElement', callback2
+      Logger.log 'myEvent', sample_data, 'anElement'
+      expect(test1).toBe(true)
+      expect(test2).toBe(true)
+
+
   # Broken with commit 9f75e64? Skipping for now.
   xdescribe 'bind', ->
     beforeEach ->

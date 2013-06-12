@@ -9,6 +9,7 @@ class @Sequence
     @bind()
     @render parseInt(@el.data('position'))
 
+
   $: (selector) ->
     $(selector, @el)
 
