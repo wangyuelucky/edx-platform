@@ -5,6 +5,9 @@ These are notable changes in edx-platform.  This is a rolling list of changes,
 in roughly chronological order, most recent first.  Add your entries at or near
 the top.  Include a label indicating the component affected.
 
+XModules: `XModuleDescriptor.__init__` and `XModule.__init__` dropped the
+`location` parameter (and added it as a field), and renamed `system` to `runtime`,
+to accord more closely to `XBlock.__init__`
 
 LMS: Some errors handling Non-ASCII data in XML courses have been fixed.
 
@@ -26,7 +29,7 @@ student.
 Blades: Staff debug info is now accessible for Graphical Slider Tool problems.
 
 Blades: For Video Alpha the events ready, play, pause, seek, and speed change
-are logged on the server (in the logs). 
+are logged on the server (in the logs).
 
 Common: Developers can now have private Django settings files.
 
