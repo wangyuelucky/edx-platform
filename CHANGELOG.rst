@@ -5,6 +5,7 @@ These are notable changes in edx-platform.  This is a rolling list of changes,
 in roughly chronological order, most recent first.  Add your entries at or near
 the top.  Include a label indicating the component affected.
 
+CMS: Allow editors to delete uploaded files/assets
 
 LMS: Some errors handling Non-ASCII data in XML courses have been fixed.
 
