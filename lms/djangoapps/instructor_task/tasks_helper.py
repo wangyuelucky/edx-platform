@@ -49,6 +49,11 @@ class UpdateProblemModuleStateError(Exception):
     pass
 
 
+def _get_current_task():
+    """Stub to make it easier to test without actually running Celery"""
+    return current_task
+
+
 def _perform_module_state_update(course_id, module_state_key, student_identifier, update_fcn, action_name, filter_fcn,
                                  xmodule_instance_args):
     """
@@ -137,7 +142,7 @@ def _perform_module_state_update(course_id, module_state_key, student_identifier
         return progress
 
     task_progress = get_task_progress()
-    current_task.update_state(state=PROGRESS, meta=task_progress)
+    _get_current_task().update_state(state=PROGRESS, meta=task_progress)
     for module_to_update in modules_to_update:
         num_attempted += 1
         # There is no try here:  if there's an error, we let it throw, and the task will
@@ -150,7 +155,7 @@ def _perform_module_state_update(course_id, module_state_key, student_identifier
 
         # update task status:
         task_progress = get_task_progress()
-        current_task.update_state(state=PROGRESS, meta=task_progress)
+        _get_current_task().update_state(state=PROGRESS, meta=task_progress)
 
     return task_progress
 
@@ -162,7 +167,7 @@ def _save_course_task(course_task):
 
 
 def update_problem_module_state(entry_id, update_fcn, action_name, filter_fcn,
-                                 xmodule_instance_args):
+                                xmodule_instance_args):
     """
     Performs generic update by visiting StudentModule instances with the update_fcn provided.
 
@@ -219,7 +224,7 @@ def update_problem_module_state(entry_id, update_fcn, action_name, filter_fcn,
     try:
         # check that the task_id submitted in the InstructorTask matches the current task
         # that is running.
-        request_task_id = current_task.request.id
+        request_task_id = _get_current_task().request.id
         if task_id != request_task_id:
             fmt = 'Requested task "{task_id}" did not match actual task "{actual_id}"'
             message = fmt.format(task_id=task_id, course_id=course_id, state_key=module_state_key, actual_id=request_task_id)
@@ -351,7 +356,7 @@ def reset_attempts_module_state(_module_descriptor, student_module, xmodule_inst
 
     Always returns true, indicating success, if it doesn't raise an exception due to database error.
     """
-    problem_state = json.loads(student_module.state)
+    problem_state = json.loads(student_module.state) if student_module.state else {}
     if 'attempts' in problem_state:
         old_number_of_attempts = problem_state["attempts"]
         if old_number_of_attempts > 0:

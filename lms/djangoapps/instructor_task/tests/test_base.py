@@ -17,7 +17,7 @@ from xmodule.modulestore.django import modulestore
 from xmodule.modulestore.tests.factories import CourseFactory, ItemFactory
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 
-from student.tests.factories import CourseEnrollmentFactory, UserFactory, AdminFactory
+from student.tests.factories import CourseEnrollmentFactory, UserFactory
 from courseware.model_data import StudentModule
 from courseware.tests.tests import LoginEnrollmentTestCase, TEST_DATA_MONGO_MODULESTORE
 
@@ -73,10 +73,7 @@ class InstructorTaskTestCase(LoginEnrollmentTestCase, ModuleStoreTestCase):
     def _create_user(self, username, is_staff=False):
         """Creates a user and enrolls them in the test course."""
         email = InstructorTaskTestCase.get_user_email(username)
-        if (is_staff):
-            AdminFactory.create(username=username, email=email)
-        else:
-            UserFactory.create(username=username, email=email)
+        UserFactory.create(username=username, email=email, is_staff=is_staff)
         thisuser = User.objects.get(username=username)
         CourseEnrollmentFactory.create(user=thisuser, course_id=self.course.id)
         return thisuser
