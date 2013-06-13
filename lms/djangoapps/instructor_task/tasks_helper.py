@@ -147,7 +147,7 @@ def _perform_module_state_update(course_id, module_state_key, student_identifier
         num_attempted += 1
         # There is no try here:  if there's an error, we let it throw, and the task will
         # be marked as FAILED, with a stack trace.
-        with dog_stats_api.timer('courseware.tasks.module.{0}.time'.format(action_name)):
+        with dog_stats_api.timer('instructor_tasks.module.{0}.time'.format(action_name)):
             if update_fcn(module_descriptor, module_to_update, xmodule_instance_args):
                 # If the update_fcn returns true, then it performed some kind of work.
                 # Logging of failures is left to the update_fcn itself.
@@ -232,7 +232,7 @@ def update_problem_module_state(entry_id, update_fcn, action_name, filter_fcn,
             raise UpdateProblemModuleStateError(message)
 
         # now do the work:
-        with dog_stats_api.timer('courseware.tasks.module.{0}.overall_time'.format(action_name)):
+        with dog_stats_api.timer('instructor_tasks.module.{0}.overall_time'.format(action_name)):
             task_progress = _perform_module_state_update(course_id, module_state_key, student_ident, update_fcn,
                                                          action_name, filter_fcn, xmodule_instance_args)
     except Exception:
